@@ -10,8 +10,10 @@ class Kowloon {
 
 constructor(){
 
-	this.settings = JSON.parse(fs.readFileSync(__dirname + "/../settings.json"));
-	//console.log(this.settings);
+	Settings.findOne(function(err,settings){
+		if(err) console.log(err);
+		this.settings = settings;
+	}
  
 }
 		
