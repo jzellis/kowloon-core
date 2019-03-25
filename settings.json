@@ -1,3 +1,4 @@
 {
-"sitename": "Josh's Site"
+"sitename": "Josh's Site",
+"mongourl": "mongodb://jzellis:Turing9981@127.0.0.1:27017/admin"
 }

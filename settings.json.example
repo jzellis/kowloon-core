@@ -1,0 +1,4 @@
+{
+"sitename": "My Kowloon",
+"mongourl": "mongodb://username:password@127.0.0.1:27017/kowloon"
+}
