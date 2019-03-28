@@ -79,7 +79,7 @@ const User = mongoose.model("User", userSchema);
 
 const userTypeDefs = gql `
 type User{
-"ID of the user. (Logged-in user only)
+"ID of the user. (Logged-in user only)"
 _id: String
 username: String!
 name: String
