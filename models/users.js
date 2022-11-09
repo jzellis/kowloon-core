@@ -4,6 +4,7 @@ const userSchema = new Schema({
     username: String,
     displayName: String,
     password: String,
+    email: String,
     avatar: { type: Schema.ObjectId, ref: 'Media', autopopulate: true },
     profile: { type: Schema.Types.Mixed }, // Mixed because it's open
     prefs: { type: Schema.Types.Mixed },

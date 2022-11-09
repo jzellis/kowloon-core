@@ -2,6 +2,7 @@ import { Schema, model, models } from "mongoose";
 
 const circleSchema = new Schema({
     name: String,
+    user: Schema.Types.ObjectId,
     icon: String,
     active: { type: Boolean, default: true },
 

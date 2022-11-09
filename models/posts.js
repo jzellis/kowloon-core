@@ -15,7 +15,7 @@ const postSchema = new Schema({
     media: [Schema.ObjectId],
     link: String,
     circles: [{type: Schema.ObjectId}],
-    published: { type: Boolean, default: false },
+    published: { type: Boolean, default: true },
     public: { type: Boolean, default: false },
     deleted: { type: Boolean, default: false },
     
