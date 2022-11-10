@@ -1,6 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
-const connectionSchema = new Schema({
+const homieSchema = new Schema({
     kId: String,
     username: String,
     displayName: String,
@@ -14,6 +14,6 @@ const connectionSchema = new Schema({
     
 }, { timestamps: true });
 
-const Connection = models.Connection || model('Connection', connectionSchema);
+const Homie = models.Homie || model('Homie', homieSchema);
 
-export default Connection;
+export default Homie;

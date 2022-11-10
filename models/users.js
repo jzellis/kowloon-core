@@ -1,5 +1,7 @@
 import { Schema, model, models } from "mongoose";
 
+
+
 const userSchema = new Schema({
     username: String,
     displayName: String,
@@ -7,7 +9,11 @@ const userSchema = new Schema({
     email: String,
     avatar: { type: Schema.ObjectId, ref: 'Media', autopopulate: true },
     profile: { type: Schema.Types.Mixed }, // Mixed because it's open
-    prefs: { type: Schema.Types.Mixed },
+    prefs: { type: Schema.Types.Mixed, default: {
+        useMarkdown: false,
+        defaultPostType: "status",
+        defaultPostIsPublic: false
+    } },
     lastLogin: Date, // The last time this user logged in
     lastRefresh: Date, // The last time this user refreshed their timeline
     active: { type: Boolean, default: true },

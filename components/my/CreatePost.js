@@ -2,15 +2,15 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function CreatePost(props) {
-    console.log(props)
+    console.log(props.user.prefs.defaultPostIsPublic)
     const [postBody, setPostBody] = useState("");
+    const [user, setUser] = useState(props.user);
     const [postTitle, setPostTitle] = useState("");
     const [postType, setPostType] = useState("status");
     const [postLink, setPostLink] = useState("");
     const [postPublic, setPostPublic] = useState(false);
     const [postCircles, setPostCircles] = useState([]);
     const circles = props.circles || [];
-    const user = props.user || {};
     const token = props.user.loginToken || "";
 
     const [postBodyPlaceholder, setPostBodyPlaceholder] = useState({
@@ -105,13 +105,13 @@ export default function CreatePost(props) {
                     <div className="form-control">
                         <label className="label cursor-pointer">
                         <span className="label-text  text-right">Public</span> 
-                            <input type="radio" name="privacy" value="public" className="radio" checked={postPublic === true} onChange={updatePrivacy} />
+                            <input type="radio" name="privacy" value="public" className="radio" checked={props.user.prefs.defaultPostIsPublic === true} onChange={updatePrivacy} />
                         </label>
                     </div>
                     <div className="form-control">
                         <label className="label cursor-pointer">
-                        <span className="label-text">For Connections Only</span> 
-                        <input type="radio" name="privacy" value="connections" className="radio" checked={postPublic === false && postCircles.length == 0} onChange={updatePrivacy}/>
+                        <span className="label-text">For Homies Only</span> 
+                        <input type="radio" name="privacy" value="connections" className="radio" checked={props.user.prefs.defaultPostIsPublic === false && postCircles.length == 0} onChange={updatePrivacy}/>
                         </label>
                     </div>
                         

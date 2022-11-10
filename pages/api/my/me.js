@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { User,Media } from '../../../models';
+import { User,Media,Circle } from '../../../models';
 import connectMongo from "../../../utils/connectMongo";
 
 
@@ -14,7 +14,11 @@ export default async function handler(req, res) {
     let email = req.body.email.toLowerCase();
     let password = await bcrypt.hash(req.body.password, 10);
     let displayName = req.body.displayName;
-    user = await User.create({ username, email, password, displayName });
+  let user = await User.create({ username, email, password, displayName });
+  await Circle.create({
+    name: "Friends",
+    user: user._id
+  })
     let token = jwt.sign({ user_id: user._id, email, password }, process.env.TOKEN_KEY)
     user.loginToken = token;
     await user.save();

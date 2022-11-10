@@ -6,6 +6,8 @@ import CreatePost from '../../components/my/CreatePost';
 import connectMongo from '../../utils/connectMongo'
 import { User, Circle } from '../../models';
 import { getCookie, getCookies } from 'cookies-next';
+import { useRouter } from 'next/router';
+import { use } from 'react';
 
 export async function getServerSideProps(context) {
   const cookies = getCookies(context);
@@ -32,7 +34,9 @@ export async function getServerSideProps(context) {
 }
 
 export default function MyHome(props) {
-  console.log(props)
+  // const router = useRouter()
+  // const token = getCookie("token");
+  // if (!token) router.push('/login')
   return (
     <div className={styles.container}>
       <Head>

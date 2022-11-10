@@ -1,10 +1,10 @@
 import User from "./users";
 import Post from "./posts";
-import Connection from "./connections";
+import Homie from "./homies";
 import Comment from "./comments";
 import Media from "./media";
 import Circle from "./circles"
-import CircleConnection from "./circleConnections";
-import Kowloon from "./Kowloon";
+import CircleHomie from "./circleHomies";
+import Settings from "./settings";
 
-export { User, Post, Connection, Circle, Comment, Media, CircleConnection, Kowloon }; 
+export { User, Post, Homie, Circle, Comment, Media, CircleHomie, Settings }; 

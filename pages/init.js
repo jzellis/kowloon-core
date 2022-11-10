@@ -3,8 +3,11 @@ import Image from 'next/image'
 import styles from '../styles/Home.module.css';
 import axios from 'axios';
 import cookieCutter from 'cookie-cutter';
-import Router from 'next/router';
+import { setCookie } from 'cookies-next';
+import { useRouter } from 'next/router';
+
 export default function Init() { 
+    const router = useRouter();
     
     const submitForm = async (e) => {
         e.preventDefault();
@@ -20,8 +23,8 @@ export default function Init() {
         //   console.log('response', response.data);
 
         if (response.data.token) {
-            cookieCutter.set('token', response.data.token);
-            Router.push('/my/')
+            setCookie('token', response.data.token);
+            router.push('/my/')
 
         }
 
