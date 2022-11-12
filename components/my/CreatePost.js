@@ -1,6 +1,6 @@
 import { useState,useEffect } from "react";
 import axios from "axios";
-import { Editor, EditorState, RichUtils } from 'draft-js';
+import { Editor, EditorState, ContentState, RichUtils } from 'draft-js';
 import {stateToHTML} from 'draft-js-export-html';
 import 'draft-js/dist/Draft.css';
 
@@ -37,20 +37,21 @@ export default function CreatePost(props) {
 
     const submitPost = async (e) => {
         e.preventDefault();
+        const contentState = editorState.getCurrentContent();
         // Put the code to add the post here
-        // console.log(stateToHTML(editorState))
-        // let post = {
-        //     author: user._id,
-        //     content: postBody,
-        //     type: postType,
-        //     title: postTitle,
-        //     link: postLink,
-        //     public: postPublic,
-        //     circles: postCircles.length > 0 ? postCircles : null
+        console.log(stateToHTML(contentState))
+        let post = {
+            author: user._id,
+            content: { html: stateToHTML(contentState), text: contentState.getPlainText() },
+            type: postType,
+            title: postTitle,
+            link: postLink,
+            public: postPublic,
+            circles: postCircles.length > 0 ? postCircles : null
 
-        // }
+        }
 
-        // console.log(post)
+        console.log(post)
 
         // let response = await axios.post("/api/my/posts", { post }, {
         //     headers: {
@@ -76,7 +77,6 @@ export default function CreatePost(props) {
     }
 
     const handleKeyCommand = (command) => {
-        console.log(command)
         // inline formatting key commands handles bold, italic, code, underline
         let theEditorState = RichUtils.handleKeyCommand(editorState, command);
     
