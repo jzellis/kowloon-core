@@ -22,6 +22,7 @@ import {
     updatePost
 } from "./posts"
 import { circle, circles, addCircle, updateCircle } from "./circles";
+import { comment, comments, addComment, updateComment } from "./circles";
 
 // export const Kowloon = async (options) => {
 
@@ -98,6 +99,17 @@ class Kowloon {
         return circles(search, limit, offset);
     }
 
+    static async comment(search = {
+        _id: null
+    }) {
+        return comment(search);
+    }
+
+    /** Static method, returns an array of users based on critera passed (i.e. {username: bob"}) with limit and offset */
+    static async comments(search = {}, limit = 0, offset = 0) {
+        return comments(search, limit, offset);
+    }
+    
 }
 
 

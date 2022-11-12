@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import axios from "axios";
+import { Editor, EditorState, RichUtils } from 'draft-js';
+import {stateToHTML} from 'draft-js-export-html';
+import 'draft-js/dist/Draft.css';
+
 
 export default function CreatePost(props) {
-    console.log(props.user.prefs.defaultPostIsPublic)
     const [postBody, setPostBody] = useState("");
     const [user, setUser] = useState(props.user);
     const [postTitle, setPostTitle] = useState("");
@@ -10,8 +13,12 @@ export default function CreatePost(props) {
     const [postLink, setPostLink] = useState("");
     const [postPublic, setPostPublic] = useState(false);
     const [postCircles, setPostCircles] = useState([]);
+    const [editorState, setEditorState] = useState(EditorState.createEmpty())
+    const [editor, setEditor] = useState(false);
     const circles = props.circles || [];
     const token = props.user.loginToken || "";
+  
+
 
     const [postBodyPlaceholder, setPostBodyPlaceholder] = useState({
         status: "Add your status here",
@@ -20,28 +27,37 @@ export default function CreatePost(props) {
         link: "Add your link description here"
     });
 
+    useEffect(() => {
+        // This is the only way to get the Draftjs editor to not fuck up with Next.
+        setEditor(true);
+    
+        return;
+    }, [])
+    
+
     const submitPost = async (e) => {
         e.preventDefault();
         // Put the code to add the post here
-        let post = {
-            author: user._id,
-            content: postBody,
-            type: postType,
-            title: postTitle,
-            link: postLink,
-            public: postPublic,
-            circles: postCircles.length > 0 ? postCircles : null
+        // console.log(stateToHTML(editorState))
+        // let post = {
+        //     author: user._id,
+        //     content: postBody,
+        //     type: postType,
+        //     title: postTitle,
+        //     link: postLink,
+        //     public: postPublic,
+        //     circles: postCircles.length > 0 ? postCircles : null
 
-        }
+        // }
 
-        console.log(post)
+        // console.log(post)
 
-        let response = await axios.post("/api/my/posts", { post }, {
-            headers: {
-                'Authorization': `Basic ${token}`
-            }
-        });
-        console.log("response", response.data);
+        // let response = await axios.post("/api/my/posts", { post }, {
+        //     headers: {
+        //         'Authorization': `Basic ${token}`
+        //     }
+        // });
+        // console.log("response", response.data);
 
         return false;
     }
@@ -50,7 +66,7 @@ export default function CreatePost(props) {
         const bodyText = e.target.value;
         setPostBody(bodyText);
         switch (true) {
-            case (bodyText.length >= 10):
+            case (bodyText.length >= 500):
                 setPostType("post");
                 break;
             case (bodyText.length == 0):
@@ -58,6 +74,20 @@ export default function CreatePost(props) {
                 break;
     }
     }
+
+    const handleKeyCommand = (command) => {
+        console.log(command)
+        // inline formatting key commands handles bold, italic, code, underline
+        let theEditorState = RichUtils.handleKeyCommand(editorState, command);
+    
+        if (theEditorState) {
+          setEditorState(theEditorState);
+          return 'handled';
+        }
+    
+        return 'not-handled';
+      }
+    
 
     const updateCircle = (e) => {
         let newPostCircles = postCircles;
@@ -97,7 +127,16 @@ export default function CreatePost(props) {
                     You can use Markdown in this post.
                 </fieldset>
                 <fieldset className="col-span-2 mb-4">
-                    <textarea id='body' name='body' className={`textarea textarea-bordered w-full ${postType == "post" ? "h-[24rem]" : "h-[6rem]"} {postType == "status" ? "text-xl" : ""}`} onChange={updateBody} placeholder={postBodyPlaceholder[postType]}></textarea>
+                    <div className={`textarea textarea-bordered w-full ${postType == "post" ? "h-[24rem]" : "h-[6rem]"} {postType == "status" ? "text-xl" : ""}`}>
+                        {editor === true ? <Editor
+                        
+                            editorState={editorState}
+                            onChange={setEditorState}
+                            handleKeyCommand={handleKeyCommand}
+                        />
+                            : false}
+                        </div>
+                    {/* <textarea id='body' name='body' className={`textarea textarea-bordered w-full ${postType == "post" ? "h-[24rem]" : "h-[6rem]"} {postType == "status" ? "text-xl" : ""}`} onChange={updateBody} placeholder={postBodyPlaceholder[postType]}></textarea> */}
                 </fieldset>
                 <fieldset className="col-span-1"></fieldset>
                 <fieldset className="col-span-1 mb-4 text-right">

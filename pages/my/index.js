@@ -2,12 +2,13 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../../styles/Home.module.css';
 import MyLayout from '../../components/my/MyLayout';
-import CreatePost from '../../components/my/CreatePost';
+// import CreatePost from '../../components/my/CreatePost';
 import connectMongo from '../../utils/connectMongo'
 import { User, Circle } from '../../models';
 import { getCookie, getCookies } from 'cookies-next';
 import { useRouter } from 'next/router';
-import { use } from 'react';
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 
 export async function getServerSideProps(context) {
   const cookies = getCookies(context);
@@ -33,6 +34,10 @@ export async function getServerSideProps(context) {
 
 }
 
+const CreatePost = dynamic(() => import('../../components/my/CreatePost'), {
+  suspense: true,
+})
+
 export default function MyHome(props) {
   // const router = useRouter()
   // const token = getCookie("token");
@@ -48,8 +53,10 @@ export default function MyHome(props) {
         <div className='col-span-2'>
         </div>
 
-          <div className='col-span-4'>
-          <CreatePost circles={props.circles} user={props.user}  />        
+        <div className='col-span-4'>
+        <Suspense fallback={`Loading...`}>
+            <CreatePost circles={props.circles} user={props.user} editorKey={"editor"} />  
+          </Suspense>  
         </div>
         </main>
 

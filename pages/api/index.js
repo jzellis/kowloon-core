@@ -6,6 +6,6 @@ export default async function handler(req, res) {
   let user = await Kowloon.user({ username: "jzellis" })
   let circles = await Kowloon.circles({ user: user._id });
   // settings = JSON.parse(JSON.stringify(settings))
-  res.status(200).json({ settings, user,circles })
+  res.status(200).json({ settings, user,circles,yo:"yo" })
   }
   
