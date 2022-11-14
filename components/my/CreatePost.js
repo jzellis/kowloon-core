@@ -1,12 +1,16 @@
 import { useState,useEffect } from "react";
 import axios from "axios";
 import { Editor, EditorState, ContentState, RichUtils } from 'draft-js';
-import {stateToHTML} from 'draft-js-export-html';
+import { stateToHTML } from 'draft-js-export-html';
+import { stateFromHTML } from "draft-js-import-html";
+import { stateToMarkdown } from "draft-js-export-markdown";
+import { stateFromMarkdown } from 'draft-js-import-markdown';
 import 'draft-js/dist/Draft.css';
-
+const showdown = require('showdown'),
+converter = new showdown.Converter();
 
 export default function CreatePost(props) {
-    const [postBody, setPostBody] = useState("");
+
     const [user, setUser] = useState(props.user);
     const [postTitle, setPostTitle] = useState("");
     const [postType, setPostType] = useState("status");
@@ -17,6 +21,7 @@ export default function CreatePost(props) {
     const [editor, setEditor] = useState(false);
     const circles = props.circles || [];
     const token = props.user.loginToken || "";
+
   
 
 
@@ -36,13 +41,15 @@ export default function CreatePost(props) {
     
 
     const submitPost = async (e) => {
+
         e.preventDefault();
         const contentState = editorState.getCurrentContent();
-        // Put the code to add the post here
-        console.log(stateToHTML(contentState))
+        const plainText = contentState.getPlainText();
+        let currentContent = user.prefs.useMarkdown === true ? converter.makeHtml(plainText) : stateToHTML(contentState)
+
         let post = {
             author: user._id,
-            content: { html: stateToHTML(contentState), text: contentState.getPlainText() },
+            content: { html: currentContent, text: plainText, description: plainText.substring(0,500) },
             type: postType,
             title: postTitle,
             link: postLink,
@@ -63,18 +70,6 @@ export default function CreatePost(props) {
         return false;
     }
 
-    const updateBody = (e) => {
-        const bodyText = e.target.value;
-        setPostBody(bodyText);
-        switch (true) {
-            case (bodyText.length >= 500):
-                setPostType("post");
-                break;
-            case (bodyText.length == 0):
-                setPostType("status");
-                break;
-    }
-    }
 
     const handleKeyCommand = (command) => {
         // inline formatting key commands handles bold, italic, code, underline
@@ -101,6 +96,13 @@ export default function CreatePost(props) {
     const updatePrivacy = (e) => {
         
         setPostPublic(e.currentTarget.value === "public" ? true: false)
+    }
+
+    const updateEditor = (state) => {
+        setEditorState(state);
+
+// Here's where we need to figure out how to convert Markdown to formatted Draft.js state if the user prefers Markdown
+
     }
 
     return (
@@ -131,7 +133,7 @@ export default function CreatePost(props) {
                         {editor === true ? <Editor
                         
                             editorState={editorState}
-                            onChange={setEditorState}
+                            onChange={updateEditor}
                             handleKeyCommand={handleKeyCommand}
                         />
                             : false}
@@ -144,13 +146,13 @@ export default function CreatePost(props) {
                     <div className="form-control">
                         <label className="label cursor-pointer">
                         <span className="label-text  text-right">Public</span> 
-                            <input type="radio" name="privacy" value="public" className="radio" checked={props.user.prefs.defaultPostIsPublic === true} onChange={updatePrivacy} />
+                            <input type="radio" name="privacy" value="public" className="radio" checked={postPublic === true} onChange={updatePrivacy} />
                         </label>
                     </div>
                     <div className="form-control">
                         <label className="label cursor-pointer">
                         <span className="label-text">For Homies Only</span> 
-                        <input type="radio" name="privacy" value="connections" className="radio" checked={props.user.prefs.defaultPostIsPublic === false && postCircles.length == 0} onChange={updatePrivacy}/>
+                        <input type="radio" name="privacy" value="connections" className="radio" checked={postPublic === false && postCircles.length == 0} onChange={updatePrivacy}/>
                         </label>
                     </div>
                         

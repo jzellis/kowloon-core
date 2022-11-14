@@ -1,52 +1,90 @@
-import connectMongo from "../../utils/connectMongo";
-import {User, Post} from "../../models";
+import { User, Post, Comment } from "../../models";
+import sanitizeHtml from "sanitize-html";
 
-const post = async function (search = {
-    _id: null
-}) {
-    let post = await Post.findOne(search);
-    let user = await User.findOne({_id: post.author})
-    return JSON.parse(JSON.stringify({post,user}));
-}
+/**
+ *
+ * @param {object} search - Search criteria
+ * @param {object} options - Options object
+ * @returns {object}
+ */
+const post = async function (
+  search = {
+    _id: null,
+  },
+  options = { user: true, comments: false }
+) {
+  let response = {};
+  response.post = await Post.findOne(search);
 
-const posts = async function (search = {}, limit = 0, offset = 0) {
-    return JSON.parse(JSON.stringify(await Post.find(search).limit(limit).skip(offset).exec()));
-}
+  if (options.user == true) {
+    response.post.author = await User.findOne({ _id: post.author });
+  }
+  if (options.comments == true) {
+    response.comments = await Comment.find({ post: post._id });
+  }
+
+  return JSON.parse(JSON.stringify(response));
+};
+
+/**
+ *
+ * @param {object*} search
+ * @param {*} options
+ * @param {*} limit
+ * @param {*} offset
+ * @returns
+ */
+
+const posts = async function (
+  search = {
+    _id: null,
+  },
+  options = { users: true },
+  limit = 0,
+  offset = 0
+) {
+  let response = {};
+  response.posts = await Post.find(search).limit(limit).skip(offset).exec();
+  if (options.users == true) {
+    response.posts.forEach(async (post) => {
+      post.author = await User.findOne({ _id: post.author });
+    });
+  }
+
+  return JSON.parse(JSON.stringify(response));
+};
 
 const addPost = async (post) => {
-    let response = {};
-    try {
-        let post = await Post.create(post);
-        let circle = await Circle.create({
-            name: "Friends",
-            post: post._id
-        })
-        response = {
-            post,
-            circle
-        };
-    } catch (e) {
-        response.error = e;
-    }
-    return JSON.parse(JSON.stringify(response));
-}
+  // Add all the sanitizing and shit here
+  let response = {};
+  // This strips all the HTML from the post's plain text
+  if (post.content.text)
+    post.content.text = post.content.text.replace(/(<([^>]+)>)/gi, "");
+  // This sanitizes the post's HTML to keep it clean
+  if (post.content.html)
+    post.content.html = sanitizeHtml(post.content.html, {
+      allowedTags: ["b", "i", "em", "strong", "a", "ul", "ol", "li"],
+      allowedAttributes: {
+        a: ["href"],
+      },
+    });
+
+  try {
+    response.post = await Post.create(post);
+  } catch (e) {
+    response.error = e;
+  }
+  return JSON.parse(JSON.stringify(response));
+};
 
 const updatePost = async (postId, fields) => {
-    let response = {};
-    try {
-        let post = await Post.findByIdAndUpdate(postId, fields);
-        response = {
-            post
-        };
-    } catch (e) {
-        response.error = e;
-    }
-    return JSON.parse(JSON.stringify(response));
-}
-
-export {
-    post,
-    posts,
-    addPost,
-    updatePost
+  let response = {};
+  try {
+    response.post = await Post.findByIdAndUpdate(postId, fields);
+  } catch (e) {
+    response.error = e;
+  }
+  return JSON.parse(JSON.stringify(response));
 };
+
+export { post, posts, addPost, updatePost };

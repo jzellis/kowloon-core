@@ -11,7 +11,8 @@ const postSchema = new Schema({
         description: String,
         html: String,
         text: String
-     },
+    },
+    meta: {type: Schema.Types.Mixed,default: {tags:[]}},
     media: [Schema.ObjectId],
     link: String,
     circles: [{type: Schema.ObjectId}],
