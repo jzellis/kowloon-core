@@ -1,4 +1,4 @@
-import { User } from "../../models";
+import { User, Log } from "../../models";
 import connectMongo from "../../utils/connectMongo";
 import bcrypt from "bcryptjs";
 
@@ -9,7 +9,6 @@ import bcrypt from "bcryptjs";
  * @returns {object}
  */
 const login = async (usernameOrEmail = "", password = "") => {
-  connectMongo();
   const request = usernameOrEmail.includes("@")
     ? { error: "Email not found", query: { email: usernameOrEmail } }
     : { error: "Username not found", query: { username: usernameOrEmail } };
@@ -27,10 +26,11 @@ const login = async (usernameOrEmail = "", password = "") => {
       break;
 
     case user && password == true:
+      response.user = user._id;
       response.token = user.loginToken;
       break;
   }
-
+  await Log.create({ user: user._id, logType: "login" });
   return response;
 };
 

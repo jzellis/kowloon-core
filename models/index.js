@@ -3,8 +3,19 @@ import Post from "./posts";
 import Homie from "./homies";
 import Comment from "./comments";
 import Media from "./media";
-import Circle from "./circles"
+import Circle from "./circles";
 import CircleHomie from "./circleHomies";
 import Settings from "./settings";
+import Log from "./log";
 
-export { User, Post, Homie, Circle, Comment, Media, CircleHomie, Settings }; 
+export {
+  User,
+  Post,
+  Homie,
+  Circle,
+  Comment,
+  Media,
+  CircleHomie,
+  Settings,
+  Log,
+};

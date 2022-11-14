@@ -1,5 +1,6 @@
 import { User, Post, Comment } from "../../models";
 import sanitizeHtml from "sanitize-html";
+import slugify from "../../utils/slugify";
 
 /**
  *
@@ -7,22 +8,16 @@ import sanitizeHtml from "sanitize-html";
  * @param {object} options - Options object
  * @returns {object}
  */
-const post = async function (
-  search = {
-    _id: null,
-  },
-  options = { user: true, comments: false }
-) {
-  let response = {};
-  response.post = await Post.findOne(search);
-
-  if (options.user == true) {
-    response.post.author = await User.findOne({ _id: post.author });
-  }
-  if (options.comments == true) {
-    response.comments = await Comment.find({ post: post._id });
-  }
-
+const post = async function (search, fields) {
+  search = search || {};
+  fields = fields || {};
+  search.deleted = false;
+  fields.deleted = 0;
+  const response = {};
+  response.post = await Post.findOne(search, fields).populate({
+    path: "author",
+    select: "username _id",
+  });
   return JSON.parse(JSON.stringify(response));
 };
 
@@ -35,28 +30,27 @@ const post = async function (
  * @returns
  */
 
-const posts = async function (
-  search = {
-    _id: null,
-  },
-  options = { users: true },
-  limit = 0,
-  offset = 0
-) {
-  let response = {};
-  response.posts = await Post.find(search).limit(limit).skip(offset).exec();
-  if (options.users == true) {
-    response.posts.forEach(async (post) => {
-      post.author = await User.findOne({ _id: post.author });
-    });
-  }
+const posts = async function (search, fields, options) {
+  search = search || {};
+  fields = fields || {};
+  options = options || {};
+  search.deleted = false;
+  fields.deleted = 0;
+  options.limit = 0;
+  options.offset = 0;
+  const response = {};
+  let posts = await Post.find(search, fields).populate({
+    path: "author",
+    select: "username _id",
+  });
+  response.posts = posts;
 
   return JSON.parse(JSON.stringify(response));
 };
 
 const addPost = async (post) => {
-  // Add all the sanitizing and shit here
   let response = {};
+  if (post.title) post.slug = slugify(post.title);
   // This strips all the HTML from the post's plain text
   if (post.content.text)
     post.content.text = post.content.text.replace(/(<([^>]+)>)/gi, "");
@@ -68,6 +62,8 @@ const addPost = async (post) => {
         a: ["href"],
       },
     });
+  if (!post.content.description)
+    post.content.description = post.content.text.substring(0, 100);
 
   try {
     response.post = await Post.create(post);

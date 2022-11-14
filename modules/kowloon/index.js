@@ -10,9 +10,7 @@ import { login } from "./login";
  * Kowloon class, with static methods
  */
 class Kowloon {
-  constructor() {
-    connectMongo();
-  }
+  constructor() {}
 
   /**
    * Returns the server settings as a key-value object
@@ -27,7 +25,7 @@ class Kowloon {
   static users = async (search, fields, options) =>
     users(search, fields, options);
 
-  static addUser = async (id, fields) => addUser(id, fields);
+  static addUser = async (user) => addUser(user);
 
   static updateUser = async (id, fields) => updateUser(id, fields);
 
@@ -38,6 +36,8 @@ class Kowloon {
   /** Static method, returns an array of users based on critera passed (i.e. {username: bob"}) with limit and offset */
   static posts = async (search, fields, options) =>
     posts(search, fields, options);
+
+  static addPost = async (post) => addPost(post);
 
   /** Static method, returns a single user based on critera passed (i.e. {username: bob"}) */
   static circle = async (search, fields, options) =>

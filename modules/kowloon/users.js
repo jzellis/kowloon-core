@@ -1,4 +1,4 @@
-import { User, Circle } from "../../models";
+import { User, Circle, Log } from "../../models";
 import * as jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -67,6 +67,16 @@ const addUser = async (newuser) => {
       name: "Friends",
       user: user._id,
     });
+    await Log.create({
+      user: user._id,
+      message: "Created User",
+    });
+    await Log.create({
+      user: user._id,
+      message: "Created Circle",
+      circle: circle._id,
+    });
+
     response = {
       user,
       circle,
