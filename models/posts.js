@@ -1,5 +1,6 @@
 import { Schema, model, models } from "mongoose";
 import User from "./users";
+import Media from "./media";
 
 const postSchema = new Schema(
   {
@@ -18,9 +19,9 @@ const postSchema = new Schema(
       text: String,
     },
     meta: { type: Schema.Types.Mixed, default: { tags: [] } },
-    media: [Schema.ObjectId],
+    media: [{ type: Schema.ObjectId, ref: "Media" }],
     link: String,
-    circles: [{ type: Schema.ObjectId }],
+    circles: [{ type: Schema.ObjectId, ref: "Circle" }],
     published: { type: Boolean, default: true },
     public: { type: Boolean, default: false },
     deleted: { type: Boolean, default: false },

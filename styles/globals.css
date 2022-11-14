@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+a{
+    @apply link-primary link
+}
+
+a:hover{
+    @apply link-hover
+}

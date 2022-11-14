@@ -39,7 +39,7 @@ const posts = async function (search, fields, options) {
   options.limit = 0;
   options.offset = 0;
   const response = {};
-  let posts = await Post.find(search, fields).populate({
+  let posts = await Post.find(search, fields).sort({ createdAt: -1 }).populate({
     path: "author",
     select: "username _id",
   });

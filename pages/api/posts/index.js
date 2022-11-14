@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   await connectMongo();
   switch (req.method) {
     case "GET":
-      res.status(200).json(await Kowloon.posts());
+      res.status(200).json(await Kowloon.posts(req.query));
       break;
     case "POST":
       res.status(200).json(await Kowloon.addPost(req.body));

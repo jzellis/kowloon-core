@@ -39,7 +39,7 @@ const users = async function (search, fields, options) {
   options.limit = 0;
   options.offset = 0;
   const response = {};
-  response.users = await User.find(search, fields);
+  response.users = await User.find(search, fields).sort({ createdAt: -1 });
   return JSON.parse(JSON.stringify(response));
 };
 
