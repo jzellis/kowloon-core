@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       res.status(200).json(await Kowloon.posts(req.query));
       break;
     case "POST":
-      res.status(200).json(await Kowloon.addPost(req.body));
+      res.status(200).json(await Kowloon.addPost(req.body.post));
       //   const userq = await Kowloon.user({ username: req.query.username });
       //   const updatedUser = await Kowloon.updateUser(userq.user._id, req.body);
       //   res.status(200).json(updatedUser);

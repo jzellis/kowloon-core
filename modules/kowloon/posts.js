@@ -48,8 +48,11 @@ const posts = async function (search, fields, options) {
   return JSON.parse(JSON.stringify(response));
 };
 
-const addPost = async (post) => {
+const addPost = async (data) => {
+  let post = data;
+  console.log("Sent data", post);
   let response = {};
+  if (post.type === "status") delete post.title;
   if (post.title) post.slug = slugify(post.title);
   // This strips all the HTML from the post's plain text
   if (post.content.text)

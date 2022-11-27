@@ -9,3 +9,8 @@ a{
 a:hover{
     @apply link-hover
 }
+
+html,body{
+    @apply bg-gray-100;
+    @apply h-screen;
+}

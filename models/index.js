@@ -7,6 +7,7 @@ import Circle from "./circles";
 import CircleHomie from "./circleHomies";
 import Settings from "./settings";
 import Log from "./log";
+import PostType from "./postTypes";
 
 export {
   User,
@@ -18,4 +19,5 @@ export {
   CircleHomie,
   Settings,
   Log,
+  PostType,
 };

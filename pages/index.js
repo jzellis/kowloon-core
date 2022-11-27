@@ -4,11 +4,19 @@ import styles from "../styles/Home.module.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Kowloon from "../modules/kowloon";
+import connectMongo from "../utils/connectMongo";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import {
+  FaCheckSquare,
+  FaAlignJustify,
+  FaLink,
+  FaCameraRetro,
+} from "react-icons/fa";
 dayjs.extend(relativeTime);
 
 export async function getServerSideProps(context) {
+  await connectMongo();
   const settings = await Kowloon.settings();
   return { props: settings };
 }
@@ -58,7 +66,13 @@ export default function Home(props) {
                   <div className={`card-body w-full`}>
                     {post.title ? (
                       <div className="post-title font-bold text-lg">
-                        {post.title}
+                        {post.link ? (
+                          <a href={post.link} target="_new">
+                            {post.title}
+                          </a>
+                        ) : (
+                          `${post.title}`
+                        )}
                       </div>
                     ) : (
                       ""
@@ -72,7 +86,14 @@ export default function Home(props) {
                       }}
                     ></div>
                     <div className="card-actions text-sm mx-2 text-gray-400 justify-end">
-                      by {post.author.username} |&nbsp;
+                      <span className="font-bold" title={post.postType}>
+                        {post.postType == "status" ? <FaCheckSquare /> : ""}
+                        {post.postType == "post" ? <FaAlignJustify /> : ""}
+                        {post.postType == "media" ? <FaCameraRetro /> : ""}
+                        {post.postType == "link" ? <FaLink /> : ""}
+                      </span>{" "}
+                      by
+                      {post.author.username} |&nbsp;
                       {dayjs(post.createdAt).fromNow()}
                     </div>
                   </div>
