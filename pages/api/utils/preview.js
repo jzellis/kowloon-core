@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     });
     response.preview = data;
   } catch (e) {
+    console.log(e);
     response.error = e;
   }
   res.status(200).json(response);

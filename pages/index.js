@@ -18,7 +18,7 @@ dayjs.extend(relativeTime);
 export async function getServerSideProps(context) {
   await connectMongo();
   const settings = await Kowloon.settings();
-  return { props: settings };
+  return { props: { settings } };
 }
 
 export default function Home(props) {
@@ -30,7 +30,7 @@ export default function Home(props) {
       let response = await axios.get("/api/posts");
       getPosts(response.data.posts);
     } catch (e) {
-      console.log(e);
+      // console.log(e.message);
     }
   };
 
@@ -51,7 +51,7 @@ export default function Home(props) {
           {props.settings.name}
         </h1>
         <h2 className="text-center col-span-12 text-gray-500 mb-8 text-sm">
-          {props.settings.description}
+          {/* {props.settings.description} */}
         </h2>
         <div className="col-span-3"></div>
         {posts.length > 0 ? (

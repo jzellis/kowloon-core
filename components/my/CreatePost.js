@@ -284,7 +284,7 @@ export default function CreatePost(props) {
     <form id="createPost">
       <div className="grid grid-cols-2">
         <fieldset className="col-span-2 flex items-center justify-end">
-          <label for="type" className="w-auto mr-4">
+          <label htmlFor="type" className="w-auto mr-4">
             Create New
           </label>
           <select

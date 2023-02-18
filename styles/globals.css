@@ -2,15 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-a{
-    @apply link-primary link
+
+body{
+    @apply h-auto
 }
 
-a:hover{
-    @apply link-hover
+
+#feed .item a{
+    @apply link;
+    @apply decoration-dotted;
 }
 
-html,body{
-    @apply bg-gray-100;
-    @apply h-screen;
+#feed .item a:hover{
+    @apply link
 }
+
+#feed p, #feed li{
+    @apply mb-8
+}
+
+#feed blockquote{
+    @apply ml-4
+}
+
+

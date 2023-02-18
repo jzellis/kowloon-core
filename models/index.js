@@ -8,7 +8,9 @@ import CircleHomie from "./circleHomies";
 import Settings from "./settings";
 import Log from "./log";
 import PostType from "./postTypes";
-
+import Following from "./following";
+import FeedItem from "./feedItem";
+import Bookmark from "./bookmark";
 export {
   User,
   Post,
@@ -20,4 +22,7 @@ export {
   Settings,
   Log,
   PostType,
+  Following,
+  FeedItem,
+  Bookmark,
 };

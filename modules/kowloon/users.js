@@ -77,10 +77,7 @@ const addUser = async (newuser) => {
       circle: circle._id,
     });
 
-    response = {
-      user,
-      circle,
-    };
+    response = user;
   } catch (e) {
     console.log(e);
     response.error = e;
