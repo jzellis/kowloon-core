@@ -11,6 +11,8 @@ const SettingsSchema = new Schema(
   {
     name: { type: String, required: true, unique: true },
     value: { type: Schema.Types.Mixed },
+    createdBy: { type: ObjectId, ref: "User" },
+    modifiedBy: { type: ObjectId, ref: "User" },
     description: String,
   },
   {

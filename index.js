@@ -7,18 +7,20 @@ import sanitizeHtml from "sanitize-html";
 import { convert, htmlToText } from "html-to-text";
 import Parser from "rss-parser";
 import { getLinkPreview, getPreviewFromContent } from "link-preview-js";
+import { modelToJSONSchema } from "mongoose-jsonschema";
+import os from "os";
+import tensify from "tensify";
+
 import {
+  Activity,
   Circle,
-  Comment,
-  Email,
-  Feed,
-  Following,
-  Friend,
+  Actor,
   Media,
-  Post,
   Settings,
   User,
 } from "./schema/index.js";
+
+import { faker } from "@faker-js/faker";
 
 import { rootCertificates } from "tls";
 dotenv.config();
@@ -27,6 +29,7 @@ const Schema = mongoose.Schema,
   SALT_WORK_FACTOR = 10;
 const KEY = process.env.JWT_KEY;
 const parser = new Parser();
+const vowelRegex = "^[aieouAIEOU].*";
 
 /**
  * @module Kowloon
@@ -41,7 +44,16 @@ class kowloon {
     this.settings = {};
     this.user = null;
     this.key = null;
+    this.actor = null;
+    this.subject = null;
     this.connection = {};
+    this.defaultPronouns = {
+      subject: "they",
+      object: "them",
+      possAdj: "their",
+      possPro: "theirs",
+      reflexive: "themselves",
+    };
   }
 
   /** init Initializes and retrieves settings */
@@ -62,6 +74,11 @@ class kowloon {
       this.settings[setting.name] = setting.value;
     });
   };
+
+  disconnect = () => {
+    mongoose.connection.close();
+    console.log("Connection closed");
+  };
   /**
    * Logs in a user and returns the user record. This does not mask out passwords or keys, so be careful!
    * @param {String} username the username
@@ -69,469 +86,424 @@ class kowloon {
    * @return {Object} The user object
    */
 
+  dbStatus = () => mongoose.connections[0].readyState;
+
   setUser = (user) => {
     this.user = user;
   };
 
+  setActor = (user) => {
+    this.actor = actor;
+  };
+
+  setSubject = (user) => {
+    this.subject = user;
+  };
+
+  userIsSubject = () => {
+    return this.user._id.toString() == this.subject._id.toString();
+  };
+
   login = async (u, p) => {
+    console.log("User", u);
+    console.log("Password", p);
     try {
       let user = await User.findOne({ username: u });
-      if (!user) return { error: "username not found" };
+      if (!user) return new Error("username not found");
       if ((await bcrypt.compare(p, user.password)) == true) {
-        await User.updateOne(
+        const lastLogin = Date.now();
+        await User.updateOne({ _id: user._id }, { $set: { lastLogin } });
+        user = await User.findOne(
           { _id: user._id },
-          { $set: { lastLogin: Date.now() } }
-        );
+          { password: 0, __v: 0 }
+        ).populate("actor");
         this.setUser(user);
-        return jwt.sign(
-          { username: user.username, email: user.email.address, id: user._id },
-          process.env.JWT_KEY,
-          { expiresIn: 31556926 }
-        );
+        let token = user.actor._kowloon.accessToken;
+        console.log("Token", token);
+        return { token, user, lastLogin };
         // return token;
       } else {
-        return { error: "incorrect password" };
+        return new Error("incorrect password");
       }
     } catch (e) {
-      console.log(e);
+      return new Error(e);
     }
   };
 
   logout = () => {
-    this.setUser(null);
+    this.setUser(undefined);
   };
 
   /** Authenticates a user against their API key. */
   auth = async (token) => {
-    try {
-      let payload = jwt.verify(token, process.env.JWT_KEY);
-      const user = await User.findOne(
-        { _id: new ObjectId(payload.id) },
-        { password: 0, publicKey: 0, privateKey: 0 }
-      );
-      this.user = user;
-      return user;
-    } catch (e) {
-      console.log(e);
-      return e;
+    if (typeof token === "string") {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_KEY);
+        const user = await User.findOne(
+          { actor: payload._id, active: true },
+          { password: 0, __v: 0 }
+        ).populate("actor", "-_kowloon.accessToken");
+        return user ? { user } : { error: "Actor not found" };
+      } catch (e) {
+        return new Error(e);
+      }
+    } else {
+      return new Error("Token is not a string");
     }
   };
 
-  /** Returns a user */
-  getUser = async (query, fields) => {
-    fields = fields || "_id username profile prefs icon email";
-    if (query._id && query._id.match(/^[0-9a-fA-F]{24}$/) != null) {
-      query._id = new ObjectId(query._id);
-    } else {
-      delete query._id;
+  verifyUserPermissions = async (user) => {
+    user = user ? user : this.user ? this.user : null;
+    let isVerified = false;
+    const verifiedUser =
+      user && user._id ? await User.findOne({ _id: user._id }) : null;
+    if (verifiedUser && user) isVerified = true;
+
+    switch (isVerified) {
+      case true:
+        return { isAdmin: user.isAdmin ? user.isAdmin : false };
+        break;
+      case false:
+        return false;
+        break;
     }
-    query = { ...query, active: true };
-    return await User.findOne(query, fields);
+  };
+
+  // Create, get, and update Kowlon settings
+
+  createSetting = async ({ name, value, description = "" }, user) => {
+    user = user ? user : this.user ? this.user : null;
+    if (await this.verifyUserPermissions(user)) {
+      const newSetting = await Settings.create({
+        name,
+        value,
+        description,
+        createdBy: user._id,
+      });
+      return {
+        name: newSetting.name,
+        value: newSetting.value,
+        description: newSetting.description,
+      };
+    }
+  };
+
+  getSetting = async (name) => {
+    const setting = await Settings.findOne({ name });
+    return {
+      name: setting.name,
+      value: setting.value,
+      description: setting.description,
+    };
+  };
+
+  updateSetting = async ({ name, value, description }, user) => {
+    user = user ? user : this.user ? this.user : null;
+    if (await this.verifyUserPermissions(user)) {
+      const fields = description
+        ? { value, description, modifiedBy: user._id }
+        : { value, modifiedBy: user._id };
+      try {
+        const setting = await Settings.findOneAndUpdate(
+          { name },
+          { $set: fields },
+          { new: true }
+        );
+        return {
+          name: setting.name,
+          value: setting.value,
+          description: setting.description,
+        };
+      } catch (e) {
+        console.log(e);
+      }
+    } else {
+      return false;
+    }
+  };
+
+  createUser = async (user) => {
+    try {
+      return await User.create(user);
+    } catch (e) {
+      return { error: e };
+    }
+  };
+
+  getUser = async (query) => {
+    query = query ? { ...query, active: true } : {};
+    try {
+      return await User.findOne(query, "-password -__v").populate("actor");
+    } catch (e) {
+      return { error: e };
+    }
   };
 
   getUsers = async (query) => {
     query = { ...query, active: true };
-    return await User.find(query);
-  };
-
-  /** Creates a user (username, password and email required) */
-  createUser = async (user) => {
     try {
-      user = await User.create(user);
-      let circle = await Circle.create({ user: user._id, name: "Friends" });
-      return { user, circle };
+      return await User.find(query, "-password -__v").populate("actor");
     } catch (e) {
-      console.log(e);
-      return new Error(e);
+      return { error: e };
     }
   };
 
-  /** Updates a user. Any params sent are updated. */
-  updateUser = async (newUser) => {
+  updateUser = async ({ query, fields }) => {
+    fields = fields
+      ? {
+          ...fields,
+          isAdmin: undefined,
+          "_kowloon.actor.accessToken": undefined,
+        }
+      : {};
     try {
-      let user = await User.findOne(
-        { _id: new ObjectId(newUser._id) },
-        "_id username password profile prefs icon email"
+      return await User.findOneAndUpdate(
+        { query },
+        { $set: { fields } },
+        { new: true }
       );
-      Object.entries(newUser).forEach((entry) => {
-        const [key, value] = entry;
-        user[key] = value;
-      });
-      // console.log(user);
-      user.save();
-      return user;
     } catch (e) {
-      return new Error(e);
+      return { error: e };
     }
   };
 
-  /** Deletes a user */
-  deleteUser = async (id) => {
-    return await User.updateOne({ _id: id }, { active: false });
+  removeUser = async ({ _id }) => {
+    try {
+      await User.findOneAndUpdate({ _id }, { $set: { active: false } });
+      return { _id };
+    } catch (e) {
+      return { error: e };
+    }
   };
 
-  /** Returns a user as an ActivityPub "Actor" object */
-  getUserAsACActor = async (user) => {
-    user = await User.findOne(user);
-    return {
-      "@context": [
-        "https://www.w3.org/ns/activitystreams",
-        "https://w3id.org/security/v1",
-      ],
-      id: `https://${this.settings.domain}/${user.username}`,
-      type: "Person",
-      preferredUsername: user.username,
-      inbox: `https://${this.settings.domain}/${user.username}/inbox`,
-      publicKey: {
-        id: `https://${this.settings.domain}/${user.username}#main-key`,
-        "@type": "Key",
-        owner: `https://${this.settings.domain}/${user.username}`,
-        publicKeyPem: `${user.publicKey}`,
-      },
-    };
+  createActor = async (actor) => {
+    try {
+      return await Actor.create(actor);
+    } catch (e) {
+      return { error: e };
+    }
   };
 
-  /** Returns a user for the ActivityPub webfinger endpoint. */
-  getUserWebfinger = async (user) => {
-    user = await User.findOne(user);
-    return {
-      subject: `acct:${user.username}@${this.settings.domain}`,
-      aliases: [`https://${this.settings.domain}/@${user.username}`],
-      links: [
+  getActor = async (query) => {
+    query = query ? { ...query, active: true } : {};
+    try {
+      return await Actor.findOne(query, "-kowloon.accessToken -__v");
+    } catch (e) {
+      return { error: e };
+    }
+  };
+
+  getActors = async (query) => {
+    query = { ...query, active: true };
+    try {
+      return await Actor.find(query, "-kowloon.accessToken -__v");
+    } catch (e) {
+      return { error: e };
+    }
+  };
+
+  updateActor = async ({ query, fields }) => {
+    fields = fields ? { ...fields, "_kowloon.accessToken": undefined } : {};
+    try {
+      return await Actor.findOneAndUpdate(
+        { query },
+        { $set: { fields } },
+        { new: true }
+      );
+    } catch (e) {
+      return { error: e };
+    }
+  };
+
+  removeActor = async ({ _id }) => {
+    try {
+      await Actor.findOneAndUpdate({ _id }, { $set: { active: false } });
+      return { _id };
+    } catch (e) {
+      return { error: e };
+    }
+  };
+
+  /* So, a note here: every activity has to have an actor, and every activity that's posted to Kowloon has an owner, which means the user who created it or for whom it is intended. The Actor object *must* have an id field -- this is non-negotiable. */
+
+  createActivity = async (activity, options) => {
+    let actor, target, owner;
+    if (options) ({ actor, target, owner } = options);
+    let response = {};
+    activity._kowloon.owner = owner ? owner : this.user ? this.user._id : null;
+
+    if (owner && owner._kowloon && owner._kowloon.accessToken)
+      owner._kowloon.accessToken = undefined;
+    let isValid = true;
+    activity.actor = activity.actor ? activity.actor : actor ? actor : null;
+    if (actor && actor._kowloon && actor._kowloon.accessToken)
+      actor._kowloon.accessToken = undefined;
+    activity.target = activity.target ? activity.target : this.subject.actor;
+    console.log("Target", activity.target);
+    if (target && target._kowloon && target._kowloon.accessToken)
+      target._kowloon.accessToken = undefined;
+
+    const hasActor = activity.actor ? true : false;
+    const hasTarget = activity.target ? true : false;
+    const hasOwner = activity._kowloon.owner ? true : false;
+    const ActorHasId = activity.actor && activity.actor.id ? true : false;
+    const TargetHasId = activity.target && activity.target.id ? true : false;
+
+    if (!ActorHasId || !hasOwner || (activity.target && !TargetHasId))
+      isValid = false;
+
+    // If the activity isn't valid, return an error
+    if (!isValid) {
+      let error = "";
+      switch (false) {
+        case hasActor:
+          error = "Activity must have an actor.";
+          break;
+        case hasOwner:
+          error = "Activity must have an owner.";
+          break;
+        case ActorHasId:
+          error = "Activity actor must have an id.";
+          break;
+        case activity.target && !TargetHasId:
+          "You have specified a target but given no id for the target.";
+          break;
+      }
+      response.error = error;
+
+      // If activity is valid, do things
+    } else {
+      let adverb = activity.object.type.toLowerCase().match(vowelRegex)
+        ? "an"
+        : "a";
+
+      // Says "Bob Jones created a note" or whatever
+      activity.summary = activity.summary
+        ? activity.summary
+        : `${activity.actor.name} ${tensify(
+            activity.type
+          ).past.toLowerCase()} ${adverb} ${activity.object.type.toLowerCase()}`;
+
+      if (!activity.object.actor && !activity.object.attributedTo)
+        activity.object.actor = activity.actor;
+
+      try {
+        let newActivity = await Activity.create(activity);
+        return newActivity;
+      } catch (e) {
+        response.error = e;
+      }
+    }
+    return response;
+  };
+
+  getActivity = async (_id) => {
+    let response = {};
+    const activity = await Activity.findOne({ _id }, " -__v");
+
+    if (activity) {
+      const isPublic = activity._kowloon.isPublic;
+      switch (true) {
+        // If Kowloon.user is set and the user is the author or owner of the activity
+        case this.user &&
+          (this.user._id == activity._kowloon.owner ||
+            this.user._id == activity._kowloon.author):
+          response.activity = activity;
+          break;
+        // If the post is not public and no user is set:
+        case isPublic == false && !this.user:
+          response.error = "This post is not public";
+          break;
+        // If the post isn't public but there is a user, see if the user has access to the activity.
+        case !isPublic && this.user.actor._id != undefined:
+          if (await activity.actorCanView(this.user.actor._id)) {
+            response = activity;
+          } else {
+            response.error = "You are not authorized to view this post";
+          }
+          break;
+      }
+    } else {
+      response.error = "No post found";
+    }
+    return response;
+  };
+
+  // Returns activities the user can view.
+  getActivities = async (query) => {
+    if (!this.user) query = { ...query, _kowloon: { isPublic: true } };
+    const response = {};
+    // If Kowloon.user is set, get any posts from the query
+    let activities = await Activity.find(query, "-_kowloon.owner");
+    if (!this.user) {
+      activities = await Promise.all(
+        activities.map(async (a) => {
+          return (await activity.actorCanView(this.user.actor._id)) ? a : null;
+        })
+      );
+    }
+    response = activities;
+    return response;
+  };
+
+  updateActivity = async ({ query, fields }) => {
+    fields = fields ? { ...fields, "_kowloon.accessToken": undefined } : {};
+    try {
+      return await Activity.findOneAndUpdate(
+        { query },
+        { $set: { fields } },
+        { new: true }
+      );
+    } catch (e) {
+      return { error: e };
+    }
+  };
+
+  removeActivity = async ({ query }) => {
+    fields = fields ? { ...fields, "_kowloon.accessToken": undefined } : {};
+    try {
+      return await Activity.findOneAndUpdate(
+        { query },
         {
-          rel: "self",
-          type: "application/activity+json",
-          href: `https://${this.settings.domain}/${user.username}`,
+          $set: {
+            summary: "This activity has been deleted",
+            "object.type": "Tombstone",
+          },
         },
-        user.profile.links.map((link) => {
-          return {
-            rel: "me",
-            href: link,
-          };
-        }),
-      ],
-    };
-  };
-
-  getPost = async (query) => {
-    query = { ...query, author: this.user._id, deleted: false };
-    return await Post.findOne(query);
-  };
-
-  getPosts = async (query) => {
-    const page = query.limit || 1;
-    const q = {
-      deleted: false,
-      public: query.public || true,
-    };
-    if (query.username) {
-      let user = await User.findOne({ username: query.username });
-      q.author = user._id;
-    }
-    if (query.type && query.type != "all") q.type = query.type;
-    if (query.maxId || query.minId || query.sinceId) {
-      q._id = {};
-      if (query.maxId) q._id["$lt"] = new ObjectId(query.maxId);
-      if (query.minId) q._id["$gt"] = new ObjectId(query.minId);
-      if (query.sinceId) q._id["$gt"] = new ObjectId(query.sinceId);
-    }
-    console.log(q);
-    const posts = await Post.find(q)
-      .sort({ publishedAt: -1 })
-      .limit(20)
-      .skip((page - 1) * 20)
-      .populate("author")
-      .populate("circles", "name icon");
-    return await Promise.all(
-      posts.map(async (post) => {
-        return this.convertPostToJsonFeedItem(post);
-      })
-    );
-  };
-
-  getDeletedPosts = async (query) => {
-    query = { ...query, deleted: true, published: true };
-    return await Post.find(query);
-  };
-
-  createPost = async (post) => {
-    post.author = this.user._id;
-    post.title = post.title ? post.title : null;
-    try {
-      let newPost = await Post.create(post);
-      newPost.author = await User.findOne({ _id: post.author });
-      let convertedPost = await this.convertPostToJsonFeedItem(newPost);
-      let feedPost = await Feed.create(convertedPost);
-      return feedPost;
-    } catch (e) {
-      console.log(e);
-      return e;
-    }
-  };
-
-  updatePost = async (post) => {
-    try {
-      return await Post.updateOne({ _id: post._id }, post);
-    } catch (e) {
-      return new Error(e);
-    }
-  };
-
-  deletePost = async (post) => {
-    try {
-      return await Post.updateOne(
-        { _id: post._id },
-        { $set: { deleted: true } }
+        { new: true }
       );
     } catch (e) {
-      return new Error(e);
-    }
-  };
-
-  convertPostToJsonFeedItem = async (post) => {
-    if (!post.author) {
-      post.author = await User.findOne({
-        _id: new ObjectId(post.author),
-      });
-    }
-    let convertedPost = {
-      id: `https://${this.settings.domain}/posts/${post._id}`,
-      url: `https://${this.settings.domain}/posts/${post._id}`,
-      title: post.title || null,
-      external_url: post.link || null, // This is an external link, like for Kowloon "link" posts
-      kowloon: {
-        type: post.type,
-        source: {
-          type: "User",
-          name: post.author.profile.name && post.author.profile.name,
-          url: `https://${this.settings.domain}/users/${post.author.username}`, // the URL of the source, not the feed URL
-          icon: `https://${this.settings.domain}/avatars/${post.author.icon}`,
-        },
-        attachments: post.attachments,
-      },
-      activity_pub: {
-        "@context": [
-          "https://www.w3.org/ns/activitystreams",
-          { "@language": post.language },
-        ],
-        type: post.type,
-        id: `https://${this.settings.domain}/posts/${post._id}`,
-        source: {
-          content: post.content.html,
-          mediaType: "text/html",
-        },
-      },
-      date_published: post.publishedAt,
-      content_html: post.content.html,
-      content_text: post.content.text,
-      summary: post.content.summary,
-      image: post.image,
-      author: {
-        name: post.author.profile.name,
-        url: `https://${this.settings.domain}/users/${post.author.username}`,
-      },
-      tags: post.tags,
-      language: post.language,
-    };
-    return convertedPost;
-  };
-
-  convertRssItemToFeed = (item, feed) => {
-    return {
-      id: item.guid || item.id || item.link,
-      url: item.link, // This is an external link, like for Kowloon "link" posts
-      title: item.title,
-      kowloon: {
-        source: {
-          type: "following",
-          name: feed.name,
-          url: feed.url,
-          icon: feed.icon,
-        },
-      },
-      date_published: item.pubDate || item.isoDate,
-      content_html: item.content,
-      summary: item.contentSnippet,
-      tags: typeof item.categories == "array" ? item.categories : null,
-    };
-  };
-
-  getLinkPreview = async (url) => {
-    try {
-      return await getLinkPreview(url, {
-        timeout: 5000,
-        followRedirects: true,
-      });
-    } catch (e) {
       return { error: e };
     }
-  };
-
-  getLinkPreviewImage = async (url) => {
-    try {
-      let p = await getLinkPreview(url, {
-        timeout: 5000,
-        followRedirects: true,
-      });
-      return { url: p.images[0] };
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  getComment = async (query) => {
-    return await Comment.findOne(query);
-  };
-
-  getComments = async (query) => {
-    return await Comments.find(query);
-  };
-
-  createComment = async (comment) => {
-    return await Comment.create(comment);
-  };
-
-  updateComment = async (comment) => {
-    return await Comment.updateOne({ _id: comment._id }, comment);
-  };
-
-  getMedia = async (media) => await Media.findOne(media);
-
-  deleteComment = async (comment) => {
-    return await Comment.updateOne(
-      { _id: comment._id },
-      { $set: { deleted: true } }
-    );
-  };
-
-  getCircle = async (query) => {
-    return await Circle.findOne(query);
-  };
-
-  getCircles = async (query) => {
-    query = { ...query, user: this.user._id };
-    return await Circle.find(query);
   };
 
   createCircle = async (circle) => {
-    return await Circle.create(circle);
-  };
-
-  updateCircle = async (circle) => {
-    return await Circle.updateOne({ _id: circle._id }, circle);
-  };
-
-  deleteCircle = async (circle) => {
-    return await Circle.updateOne(
-      { _id: circle._id },
-      { $set: { deleted: true } }
-    );
-  };
-
-  createMedia = async (media) => await Media.create(media);
-
-  createFollowingFromUrl = async (url) => {
     try {
-      let feed = await parser.parseURL(url);
-      feed.items = [];
-      let nfol = {
-        user: this.user,
-        feedType: "rss",
-        uniqueId: feed.link,
-        name: feed.title,
-        url: feed.link,
-        feedUrl: url,
-        icon: feed.image ? feed.image.url : "",
-        description: feed.description,
-      };
-      // return feed;
-      return await Following.create(nfol);
+      return await Circle.create(circle);
     } catch (e) {
-      console.log(e);
+      return { error: e };
     }
   };
 
-  getPublicPosts = async (query = {}) => {
-    let posts = await Post.find({
-      ...query,
-      public: true,
-      deleted: false,
-      publishedAt: { $lte: Date.now() },
-    })
-      .populate({ path: "attachments" })
-      .populate("author", "username profile icon");
-    return posts.map(async (post) => this.convertPostToJsonFeedItem(post));
+  updateCircle = async ({ query, fields }) => {
+    fields = fields ? { ...fields, owner: undefined } : {};
+    try {
+      return await Circle.findOneAndUpdate(
+        { query },
+        { $set: { fields } },
+        { new: true }
+      );
+    } catch (e) {
+      return { error: e };
+    }
   };
 
-  addSetting = async (setting) => await Settings.create(setting);
-
-  getUserPosts = async (userId, options = { public: false }) => {
-    return await Post.find({
-      author: userId,
-      public: options.public,
-      deleted: false,
-    }).populate({ path: "attachments" });
+  addActorToCircle = async (circleId, actorId) => {
+    const circle = await Circle.findOne({ _id: circleId });
+    return await circle.inviteMember(actorId);
   };
 
-  getUserTimeline = async (options = { page: 1, read: true, type: null }) => {
-    let { page, read, type } = options;
-    let q = {
-      "kowloon.read": read ? read : false,
-    };
-    if (type != null) q["kowloon.post_type"] = type;
-    const numItems = 10;
-    page = page - 1;
-
-    return await Feed.find(q)
-      .limit(numItems)
-      .skip(numItems * page)
-      .sort({ date_published: "desc" });
-  };
-
-  refreshUserTimeline = async () => {
-    const following = await Following.find({
-      user: this.user,
-      feedType: "rss",
-    });
-    const posts = await Post.find().populate("author attachments");
-    await Feed.deleteMany({});
-    // await Promise.all(
-    //   await following.map(async (feed) => {
-    //     try {
-    //       let parsed = await parser.parseURL(feed.feedUrl);
-    //       await parsed.items.map(async (item) => {
-    //         // await Feed.create(this.convertRssItemToFeed(item, feed));
-    //         let cnvitem = await this.convertRssItemToFeed(item, feed);
-    //         await Feed.findOneAndUpdate({ id: this.id }, cnvitem, {
-    //           upsert: true,
-    //         });
-    //       });
-    //     } catch (e) {
-    //       console.log(e);
-    //     }
-    //   })
-    // );
-    await Promise.all(
-      await posts.map(async (post) => {
-        const fi = await this.convertPostToJsonFeedItem(post);
-        await Feed.create(fi);
-      })
-    );
-    await User.updateOne(this.user, {
-      $set: { lastTimelineUpdate: Date.now() },
-    });
-    return true;
-  };
-
-  dbStatus = () => {
-    return mongoose.connections[0].readyState;
-  };
-
-  transferFollowing = async () => {
-    let user = await User.findOne();
-    await Post.updateMany({}, { $set: { author: user._id } });
-    return true;
-  };
+  // /Kowloon
 }
 /** kowloon class definition
  */

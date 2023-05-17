@@ -20,5 +20,3 @@ export const Email = new Schema({
   // Change the default to true if you don't need to validate a new user's email address
   validated: { type: Boolean, default: true },
 });
-
-Email;

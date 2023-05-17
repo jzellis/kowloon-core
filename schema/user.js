@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import { generateKeyPairSync } from "crypto";
+import jwt from "jsonwebtoken";
 import { Email } from "./email.js";
+import { Actor } from "./actor.js";
 const Schema = mongoose.Schema,
   ObjectId = mongoose.Types.ObjectId,
   SALT_WORK_FACTOR = 10;
@@ -21,20 +25,12 @@ const UserSchema = new Schema(
     //Our password is hashed with bcrypt
     password: { type: String, required: true },
     email: { type: Email, required: true },
-    profile: {
-      name: String,
-      bio: String,
-      location: String,
-      links: [String],
-    },
-    icon: String,
+    actor: { type: ObjectId, ref: "Actor" },
     prefs: Schema.Types.Mixed,
+    isAdmin: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
-    apiKey: String,
-    publicKey: String,
-    privateKey: String,
     lastLogin: Date,
-    lastTimelineUpdate: { type: Date, default: Date.now },
+    lastUpdate: { type: Date, default: Date.now },
   },
   {
     timestamps: true,
@@ -45,34 +41,17 @@ const UserSchema = new Schema(
 UserSchema.pre("save", async function (next) {
   if (this.isModified("password"))
     this.password = bcrypt.hashSync(this.password, 10);
-  if (!this.publicKey) {
-    const pair = await generateKeyPairSync("rsa", {
-      modulusLength: 4096,
-      publicKeyEncoding: {
-        type: "spki",
-        format: "pem",
-      },
-      privateKeyEncoding: {
-        type: "pkcs8",
-        format: "pem",
-        cipher: "aes-256-cbc",
-        passphrase: "top secret",
-      },
-    });
 
-    this.publicKey = pair.publicKey;
-    this.privateKey = pair.privateKey;
-  }
-  if (!this.apiKey)
-    this.apiKey = Array.from(Array(64), () =>
-      Math.floor(Math.random() * 36).toString(36)
-    ).join("");
   next();
 });
 
 /** Compares a plaintext password to the user's hashed password and returns true if it's correct and false otherwise. */
 UserSchema.methods.comparePassword = async function (plaintext) {
   return await bcrypt.compare(plaintext, this.password);
+};
+
+UserSchema.methods.getCircles = async function () {
+  return await mongoose.model("Circle").find({ owner: this.id });
 };
 
 const User = mongoose.model("User", UserSchema);

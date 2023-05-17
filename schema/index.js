@@ -1,23 +1,20 @@
 import Circle from "./circle.js";
-import Comment from "./comment.js";
+import { CircleMember } from "./circleMember.js";
 import { Email } from "./email.js";
-import Feed from "./feed.js";
-import Following from "./following.js";
-import Friend from "./friend.js";
-import { Media, MediaSchema } from "./media.js";
-import Post from "./post.js";
+import { Actor, ActorSchema } from "./actor.js";
+import Activity from "./activity.js";
+import { Media } from "./media.js";
 import Settings from "./settings.js";
 import User from "./user.js";
 
 export {
+  Activity,
   Circle,
-  Comment,
+  CircleMember,
   Email,
-  Feed,
-  Following,
-  Friend,
+  Actor,
+  ActorSchema,
   Media,
-  Post,
   Settings,
   User,
 };
