@@ -1,73 +1,58 @@
-import * as dotenv from "dotenv";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-const Schema = mongoose.Schema;
-const ObjectId = mongoose.Types.ObjectId;
+import ObjectSchema from "./object.js";
+import Settings from "./settings.js";
+import bcrypt from "bcryptjs";
+const Schema = mongoose.Schema,
+  ObjectId = mongoose.Types.ObjectId,
+  SALT_WORK_FACTOR = 10;
 const KEY = process.env.JWT_KEY;
+
 /**
- * @class Circle
+ * @class Actor
  */
 
-const CircleSchema = new Schema(
-  {
-    owner: { type: ObjectId, ref: "User", required: true },
-    name: { type: String, required: true },
-    icon: { type: String, default: "circle.png" },
-    description: String,
-    deleted: Date,
-    members: {
-      type: Array,
-      fields: [
-        { name: "actor", type: ObjectId, ref: "Actor" },
-        { name: "accepted", type: Date },
-        { name: "deleted", type: Date },
-        { name: "inviteCode", type: String, default: "" },
-      ],
-    },
-  },
-  { timestamps: true }
-);
+const CircleSchema = ObjectSchema.clone();
+CircleSchema.add({
+  _owner: { type: String, required: true },
+});
 
-CircleSchema.methods.inviteMember = async function (actorId) {
-  const inviteCode = jwt.sign(
-    {
-      circleId: this._id,
-      actorId: actorId,
-      ownerId: this.owner,
-    },
-    process.env.JWT_KEY
-  );
-  this.members.push({
-    actor: actorId,
-    inviteCode: inviteCode,
-  });
+CircleSchema.post("save", async function (doc) {
+  let domain = await Settings.findOne({ name: "domain" });
+  let username = doc.actor.preferredUsername;
+  doc.id = `${domain.value}/@${username}/c/${this._id}`;
 
-  await this.save();
-  return inviteCode;
+  doc.save();
+});
+
+CircleSchema.methods.addActor = async function (actor) {
+  let actorId = typeof actor == "object" ? actor.id : actor;
+  if (actorId) {
+    const accessToken = jwt.sign(
+      {
+        _id: this.id,
+        actorId,
+      },
+      process.env.JWT_KEY
+    );
+    this.items.push({
+      type: "Relationship",
+      subject: actor,
+      accessToken,
+      created: Date.now(),
+      active: true,
+    });
+
+    this.save();
+  }
 };
 
-CircleSchema.methods.acceptInvite = async function (inviteCode) {
-  const membership = this.members.find((e, i) => {
-    return e.inviteCode == inviteCode;
-  });
-  this.members[this.members.indexOf(membership)].accepted = Date.now();
-  if (this.members[this.members.indexOf(membership)].deleted)
-    delete this.members[this.members.indexOf(membership)].deleted;
-  this.markModified("members");
-  await this.save();
-  return true;
-};
-
-CircleSchema.methods.removeMember = async function (actorId) {
-  const membership = this.members.actor(actorId);
-  membership.deleted = Date.now();
-  this.save();
-};
-
-CircleSchema.methods.isMember = async function (actor) {
-  return this.members.find((member) => {
-    return (member.actor = actor && member.accepted && !member.deleted);
-  });
+CircleSchema.methods.removeActor = async function (actor) {
+  let actorId = typeof actor == "object" ? actor.id : actor;
+  if (actorId) {
+    this.items.pull({ subject: actorId });
+    this.save();
+  }
 };
 
 const Circle = mongoose.model("Circle", CircleSchema);

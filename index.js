@@ -1,62 +1,55 @@
 import * as dotenv from "dotenv";
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
-import { generateKeyPairSync } from "crypto";
-import jwt from "jsonwebtoken";
-import sanitizeHtml from "sanitize-html";
-import { convert, htmlToText } from "html-to-text";
-import Parser from "rss-parser";
-import { getLinkPreview, getPreviewFromContent } from "link-preview-js";
-import { modelToJSONSchema } from "mongoose-jsonschema";
-import os from "os";
-import tensify from "tensify";
+// import bcrypt from "bcryptjs";
+// import jwt from "jsonwebtoken";
+import { Activity, Actor, Circle, Settings } from "./schema/index.js";
+import util from "util";
 
-import {
-  Activity,
-  Circle,
-  Actor,
-  Media,
-  Settings,
-  User,
-} from "./schema/index.js";
-
-import { faker } from "@faker-js/faker";
-
-import { rootCertificates } from "tls";
 dotenv.config();
-const Schema = mongoose.Schema,
-  ObjectId = mongoose.Types.ObjectId,
-  SALT_WORK_FACTOR = 10;
+const SALT_WORK_FACTOR = 10;
 const KEY = process.env.JWT_KEY;
-const parser = new Parser();
-const vowelRegex = "^[aieouAIEOU].*";
 
 /**
  * @module Kowloon
  */
 class kowloon {
-  //the class constructor
-  /**
-   * constructor description
-   * @param  {null} null Has no parameters
-   */
   constructor() {
     this.settings = {};
-    this.user = null;
-    this.key = null;
-    this.actor = null;
-    this.subject = null;
     this.connection = {};
-    this.defaultPronouns = {
-      subject: "they",
-      object: "them",
-      possAdj: "their",
-      possPro: "theirs",
-      reflexive: "themselves",
-    };
+    this.actor = null;
+    this.owner = null;
+    this.target = null;
+    this.subject = null;
   }
 
-  /** init Initializes and retrieves settings */
+  sanitize = (thing) => {
+    if (thing) {
+      let newThing = thing._doc ? thing._doc : thing;
+      for (const [key, value] of Object.entries(newThing)) {
+        if (value && value.length == 0) newThing[key] = undefined;
+      }
+      let fields = ["bto", "bcc", "_id", "_kowloon", "__v", "_owner"];
+      fields.forEach((e) => {
+        newThing[e] = undefined;
+      });
+      return newThing;
+    }
+  };
+
+  setActor = (actor) => {
+    this.actor = this.sanitize(actor);
+  };
+  setTarget = (target) => {
+    this.target = this.sanitize(target);
+  };
+  setSubject = (subject) => {
+    this.subject = this.sanitize(subject);
+  };
+
+  setOwner = (owner) => {
+    this.owner = owner;
+  };
+
   init = async () => {
     console.log("Loading Kowloon....");
     // if (!mongoose.connections[0].readyState) {
@@ -73,441 +66,270 @@ class kowloon {
     settings.forEach((setting) => {
       this.settings[setting.name] = setting.value;
     });
+
+    return true;
+  };
+
+  login = async ({ username, password }) => {
+    console.log("Username", username.trim());
+    let user = await Actor.findOneAndUpdate(
+      { preferredUsername: username },
+      { "_kowloon.lastLogin": Date.now() },
+      { new: true }
+    );
+    if (!user) return { error: "User not found on this server" };
+    let verify = await user.verifyPassword(password.trim());
+    if (!verify) {
+      return { error: "Password is incorrect" };
+    } else {
+      return user._kowloon.accessToken;
+    }
+  };
+
+  auth = async (token) => {
+    const user = await Actor.findOne({ "_kowloon.accessToken": token });
+    if (!user) return { error: "Token not authorized" };
+    return this.sanitize(user);
   };
 
   disconnect = () => {
     mongoose.connection.close();
     console.log("Connection closed");
   };
-  /**
-   * Logs in a user and returns the user record. This does not mask out passwords or keys, so be careful!
-   * @param {String} username the username
-   * @param {String} password the password
-   * @return {Object} The user object
-   */
 
   dbStatus = () => mongoose.connections[0].readyState;
 
-  setUser = (user) => {
-    this.user = user;
-  };
-
-  setActor = (user) => {
-    this.actor = actor;
-  };
-
-  setSubject = (user) => {
-    this.subject = user;
-  };
-
-  userIsSubject = () => {
-    return this.user._id.toString() == this.subject._id.toString();
-  };
-
-  login = async (u, p) => {
-    console.log("User", u);
-    console.log("Password", p);
-    try {
-      let user = await User.findOne({ username: u });
-      if (!user) return new Error("username not found");
-      if ((await bcrypt.compare(p, user.password)) == true) {
-        const lastLogin = Date.now();
-        await User.updateOne({ _id: user._id }, { $set: { lastLogin } });
-        user = await User.findOne(
-          { _id: user._id },
-          { password: 0, __v: 0 }
-        ).populate("actor");
-        this.setUser(user);
-        let token = user.actor._kowloon.accessToken;
-        console.log("Token", token);
-        return { token, user, lastLogin };
-        // return token;
-      } else {
-        return new Error("incorrect password");
-      }
-    } catch (e) {
-      return new Error(e);
-    }
-  };
-
-  logout = () => {
-    this.setUser(undefined);
-  };
-
-  /** Authenticates a user against their API key. */
-  auth = async (token) => {
-    if (typeof token === "string") {
-      try {
-        const payload = jwt.verify(token, process.env.JWT_KEY);
-        const user = await User.findOne(
-          { actor: payload._id, active: true },
-          { password: 0, __v: 0 }
-        ).populate("actor", "-_kowloon.accessToken");
-        return user ? { user } : { error: "Actor not found" };
-      } catch (e) {
-        return new Error(e);
-      }
-    } else {
-      return new Error("Token is not a string");
-    }
-  };
-
-  verifyUserPermissions = async (user) => {
-    user = user ? user : this.user ? this.user : null;
-    let isVerified = false;
-    const verifiedUser =
-      user && user._id ? await User.findOne({ _id: user._id }) : null;
-    if (verifiedUser && user) isVerified = true;
-
-    switch (isVerified) {
-      case true:
-        return { isAdmin: user.isAdmin ? user.isAdmin : false };
-        break;
-      case false:
-        return false;
-        break;
-    }
-  };
-
-  // Create, get, and update Kowlon settings
-
-  createSetting = async ({ name, value, description = "" }, user) => {
-    user = user ? user : this.user ? this.user : null;
-    if (await this.verifyUserPermissions(user)) {
-      const newSetting = await Settings.create({
-        name,
-        value,
-        description,
-        createdBy: user._id,
-      });
-      return {
-        name: newSetting.name,
-        value: newSetting.value,
-        description: newSetting.description,
-      };
-    }
-  };
-
-  getSetting = async (name) => {
-    const setting = await Settings.findOne({ name });
-    return {
-      name: setting.name,
-      value: setting.value,
-      description: setting.description,
-    };
-  };
-
-  updateSetting = async ({ name, value, description }, user) => {
-    user = user ? user : this.user ? this.user : null;
-    if (await this.verifyUserPermissions(user)) {
-      const fields = description
-        ? { value, description, modifiedBy: user._id }
-        : { value, modifiedBy: user._id };
-      try {
-        const setting = await Settings.findOneAndUpdate(
-          { name },
-          { $set: fields },
-          { new: true }
-        );
-        return {
-          name: setting.name,
-          value: setting.value,
-          description: setting.description,
-        };
-      } catch (e) {
-        console.log(e);
-      }
-    } else {
-      return false;
-    }
-  };
-
-  createUser = async (user) => {
-    try {
-      return await User.create(user);
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  getUser = async (query) => {
-    query = query ? { ...query, active: true } : {};
-    try {
-      return await User.findOne(query, "-password -__v").populate("actor");
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  getUsers = async (query) => {
-    query = { ...query, active: true };
-    try {
-      return await User.find(query, "-password -__v").populate("actor");
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  updateUser = async ({ query, fields }) => {
-    fields = fields
+  getActivity = async (query) => {
+    if (typeof query === "string") query = { id: query };
+    query = this.actor
       ? {
-          ...fields,
-          isAdmin: undefined,
-          "_kowloon.actor.accessToken": undefined,
+          ...query,
+          $or: [
+            { "actor.id": this.actor.id },
+            { "_kowloon.isPublic": true },
+            { bcc: this.actor.id },
+            { to: this.actor.id },
+            { cc: this.actor.id },
+            { bto: this.actor.id },
+          ],
         }
-      : {};
-    try {
-      return await User.findOneAndUpdate(
-        { query },
-        { $set: { fields } },
-        { new: true }
-      );
-    } catch (e) {
-      return { error: e };
+      : { ...query, "_kowloon.isPublic": true };
+    console.log(query);
+    let activity = await Activity.findOne(query);
+    if (activity) {
+      let canComment = await activity.canComment(this.actor.id);
+      if (canComment == true) activity = { ...activity._doc, canComment };
+      // return activity;
+      return this.sanitize(activity);
     }
   };
 
-  removeUser = async ({ _id }) => {
-    try {
-      await User.findOneAndUpdate({ _id }, { $set: { active: false } });
-      return { _id };
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  createActor = async (actor) => {
-    try {
-      return await Actor.create(actor);
-    } catch (e) {
-      return { error: e };
-    }
+  getActivities = async (query, page) => {
+    let whichPage = page ? page : 1;
+    let limit = page ? 20 : 999;
+    if (typeof query === "string") query = { id: query };
+    query = this.actor
+      ? {
+          ...query,
+          // "actor.id": this.actor.id,
+          $or: [
+            // { "actor.id": this.actor.id },
+            { "_kowloon.isPublic": true },
+            { bcc: this.actor.id },
+            { to: this.actor.id },
+            { cc: this.actor.id },
+            { bto: this.actor.id },
+          ],
+        }
+      : { ...query, "_kowloon.isPublic": true };
+    console.log(query);
+    let activities = await Activity.find(query);
+    // .sort("-created")
+    // .skip((page - 1) * 20)
+    // .limit(limit);
+    activities = [...activities];
+    return activities.map((a) => this.sanitize(a));
+    // return activities;
   };
 
   getActor = async (query) => {
-    query = query ? { ...query, active: true } : {};
-    try {
-      return await Actor.findOne(query, "-kowloon.accessToken -__v");
-    } catch (e) {
-      return { error: e };
-    }
+    if (typeof query === "string") query = { id: query };
+    let actor = await Actor.findOne(query);
+    return this.sanitize(actor);
   };
 
   getActors = async (query) => {
-    query = { ...query, active: true };
+    if (typeof query === "string") query = { id: query };
+    let actors = await Actor.find(query);
+    actors = [...actors];
+    return actors.map((a) => this.sanitize(a));
+  };
+
+  getCircle = async (q) => {
+    if (!this.owner) return { error: "You must be a user to do this" };
+    q = { ...q, "actor.id": this.owner.id };
+    return this.sanitize(await Circle.findOne(q));
+  };
+
+  getCircles = async (q) => {
+    if (!this.owner) return { error: "You must be a user to do this" };
+    q = { ...q, "actor.id": this.owner.id };
+    let circles = await Circle.find(q).sort("created");
+    circles = [...circles];
+    return circles.map((a) => this.sanitize(a));
+  };
+
+  createActivity = async (a) => {
+    if (!this.owner) return { error: "No actor set!" };
+    a._owner = this.owner.id;
     try {
-      return await Actor.find(query, "-kowloon.accessToken -__v");
+      const activity = await Activity.findOneAndUpdate(
+        { id: a.id },
+        { a },
+        { upsert: true, new: true }
+      );
+      let responses = await activity.deliver();
+      return activity;
     } catch (e) {
       return { error: e };
     }
   };
 
-  updateActor = async ({ query, fields }) => {
-    fields = fields ? { ...fields, "_kowloon.accessToken": undefined } : {};
+  createActor = async (a) => {
+    if (!this.owner) return { error: "No actor set!" };
+    a._owner = this.owner.id;
     try {
       return await Actor.findOneAndUpdate(
-        { query },
-        { $set: { fields } },
-        { new: true }
+        { id: a.id },
+        { a },
+        { upsert: true, new: true }
       );
     } catch (e) {
       return { error: e };
     }
   };
 
-  removeActor = async ({ _id }) => {
-    try {
-      await Actor.findOneAndUpdate({ _id }, { $set: { active: false } });
-      return { _id };
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  /* So, a note here: every activity has to have an actor, and every activity that's posted to Kowloon has an owner, which means the user who created it or for whom it is intended. The Actor object *must* have an id field -- this is non-negotiable. */
-
-  createActivity = async (activity, options) => {
-    let actor, target, owner;
-    if (options) ({ actor, target, owner } = options);
-    let response = {};
-    activity._kowloon.owner = owner ? owner : this.user ? this.user._id : null;
-
-    if (owner && owner._kowloon && owner._kowloon.accessToken)
-      owner._kowloon.accessToken = undefined;
-    let isValid = true;
-    activity.actor = activity.actor ? activity.actor : actor ? actor : null;
-    if (actor && actor._kowloon && actor._kowloon.accessToken)
-      actor._kowloon.accessToken = undefined;
-    activity.target = activity.target ? activity.target : this.subject.actor;
-    console.log("Target", activity.target);
-    if (target && target._kowloon && target._kowloon.accessToken)
-      target._kowloon.accessToken = undefined;
-
-    const hasActor = activity.actor ? true : false;
-    const hasTarget = activity.target ? true : false;
-    const hasOwner = activity._kowloon.owner ? true : false;
-    const ActorHasId = activity.actor && activity.actor.id ? true : false;
-    const TargetHasId = activity.target && activity.target.id ? true : false;
-
-    if (!ActorHasId || !hasOwner || (activity.target && !TargetHasId))
-      isValid = false;
-
-    // If the activity isn't valid, return an error
-    if (!isValid) {
-      let error = "";
-      switch (false) {
-        case hasActor:
-          error = "Activity must have an actor.";
-          break;
-        case hasOwner:
-          error = "Activity must have an owner.";
-          break;
-        case ActorHasId:
-          error = "Activity actor must have an id.";
-          break;
-        case activity.target && !TargetHasId:
-          "You have specified a target but given no id for the target.";
-          break;
-      }
-      response.error = error;
-
-      // If activity is valid, do things
-    } else {
-      let adverb = activity.object.type.toLowerCase().match(vowelRegex)
-        ? "an"
-        : "a";
-
-      // Says "Bob Jones created a note" or whatever
-      activity.summary = activity.summary
-        ? activity.summary
-        : `${activity.actor.name} ${tensify(
-            activity.type
-          ).past.toLowerCase()} ${adverb} ${activity.object.type.toLowerCase()}`;
-
-      if (!activity.object.actor && !activity.object.attributedTo)
-        activity.object.actor = activity.actor;
-
-      try {
-        let newActivity = await Activity.create(activity);
-        return newActivity;
-      } catch (e) {
-        response.error = e;
-      }
-    }
-    return response;
-  };
-
-  getActivity = async (_id) => {
-    let response = {};
-    const activity = await Activity.findOne({ _id }, " -__v");
-
-    if (activity) {
-      const isPublic = activity._kowloon.isPublic;
-      switch (true) {
-        // If Kowloon.user is set and the user is the author or owner of the activity
-        case this.user &&
-          (this.user._id == activity._kowloon.owner ||
-            this.user._id == activity._kowloon.author):
-          response.activity = activity;
-          break;
-        // If the post is not public and no user is set:
-        case isPublic == false && !this.user:
-          response.error = "This post is not public";
-          break;
-        // If the post isn't public but there is a user, see if the user has access to the activity.
-        case !isPublic && this.user.actor._id != undefined:
-          if (await activity.actorCanView(this.user.actor._id)) {
-            response = activity;
-          } else {
-            response.error = "You are not authorized to view this post";
-          }
-          break;
-      }
-    } else {
-      response.error = "No post found";
-    }
-    return response;
-  };
-
-  // Returns activities the user can view.
-  getActivities = async (query) => {
-    if (!this.user) query = { ...query, _kowloon: { isPublic: true } };
-    const response = {};
-    // If Kowloon.user is set, get any posts from the query
-    let activities = await Activity.find(query, "-_kowloon.owner");
-    if (!this.user) {
-      activities = await Promise.all(
-        activities.map(async (a) => {
-          return (await activity.actorCanView(this.user.actor._id)) ? a : null;
-        })
-      );
-    }
-    response = activities;
-    return response;
-  };
-
-  updateActivity = async ({ query, fields }) => {
-    fields = fields ? { ...fields, "_kowloon.accessToken": undefined } : {};
-    try {
-      return await Activity.findOneAndUpdate(
-        { query },
-        { $set: { fields } },
-        { new: true }
-      );
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  removeActivity = async ({ query }) => {
-    fields = fields ? { ...fields, "_kowloon.accessToken": undefined } : {};
-    try {
-      return await Activity.findOneAndUpdate(
-        { query },
-        {
-          $set: {
-            summary: "This activity has been deleted",
-            "object.type": "Tombstone",
-          },
-        },
-        { new: true }
-      );
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  createCircle = async (circle) => {
-    try {
-      return await Circle.create(circle);
-    } catch (e) {
-      return { error: e };
-    }
-  };
-
-  updateCircle = async ({ query, fields }) => {
-    fields = fields ? { ...fields, owner: undefined } : {};
+  createCircle = async (a) => {
+    if (!this.owner) return { error: "No actor set!" };
+    a._owner = this.owner.id;
     try {
       return await Circle.findOneAndUpdate(
-        { query },
-        { $set: { fields } },
-        { new: true }
+        { id: a.id },
+        { a },
+        { upsert: true, new: true }
       );
     } catch (e) {
       return { error: e };
     }
   };
 
-  addActorToCircle = async (circleId, actorId) => {
-    const circle = await Circle.findOne({ _id: circleId });
-    return await circle.inviteMember(actorId);
+  createUser = async (a) => {
+    let actor = await Actor.create(a);
+    this.setActor(actor);
+    let circle = await Circle.create({
+      _owner: actor.id,
+      actor: actor,
+      type: "Collection",
+      name: "Joshua Ellis's Friends Circle",
+      items: [],
+    });
+    circle.addActor(actor);
+    let firstA = await Activity.create({
+      _owner: actor.id,
+      actor: actor,
+      object: actor,
+      subject: actor,
+      target: [actor],
+      type: "Create",
+      published: Date.now(),
+      summary: "Created Joshua Ellis",
+      _kowloon: {
+        isPublic: false,
+        viewCircles: [circle.id],
+        commentCircles: [circle.id],
+      },
+    });
+
+    await Activity.create({
+      _owner: actor.id,
+      actor: actor,
+      type: "Create",
+      object: circle,
+      published: Date.now(),
+      _kowloon: { isPublic: false },
+    });
+
+    return actor;
   };
 
-  // /Kowloon
+  updateActor = async (actor) => {
+    if (!this.owner || (this.owner && this.owner.id != actor.id))
+      return { error: "You do not have permission to do this" };
+    return await Actor.findOneAndUpdate(
+      { id: actor.id },
+      { actor },
+      { new: true }
+    );
+  };
+
+  updateActivity = async (activity) => {
+    if (!this.owner || (this.owner && this.owner.id != activity.actor.id))
+      return { error: "You do not have permission to do this" };
+    return await Activity.findOneAndUpdate(
+      { id: activity.id },
+      { activity },
+      { new: true }
+    );
+  };
+
+  /********
+   *
+   *
+   *
+   *
+   *
+   *
+   */
+
+  reset = async () => {
+    await Activity.deleteMany({});
+    await Actor.deleteMany({});
+    await Circle.deleteMany({});
+    try {
+      let actor = await this.createUser({
+        name: "Admin",
+        preferredUsername: "admin",
+        summary: "Kowloon Admin",
+        location: {
+          name: "London, UK",
+          type: "Place",
+        },
+        icon: {
+          type: "Image",
+          name: "Admin",
+          url: `${this.settings.domain}/images/avatars/admin.png`,
+        },
+        url: [
+          {
+            type: "Link",
+            href: "https://www.zenarchery.com",
+            name: "Zenarchery (home page",
+          },
+        ],
+        _kowloon: {
+          username: "admin",
+          email: "jzellis@gmail.com",
+          password: "GoTeamVenture",
+          isAdmin: true,
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
 }
-/** kowloon class definition
- */
 
 const Kowloon = new kowloon();
 await Kowloon.init();
+// await Kowloon.reset();
 export default Kowloon;

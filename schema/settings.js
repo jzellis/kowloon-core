@@ -1,25 +1,18 @@
 import mongoose from "mongoose";
-const Schema = mongoose.Schema,
-  ObjectId = mongoose.Types.ObjectId,
-  SALT_WORK_FACTOR = 10;
-const KEY = process.env.JWT_KEY;
-
-/**
- * @class Settings
- */
+const Schema = mongoose.Schema;
 const SettingsSchema = new Schema(
   {
     name: { type: String, required: true, unique: true },
     value: { type: Schema.Types.Mixed },
-    createdBy: { type: ObjectId, ref: "User" },
-    modifiedBy: { type: ObjectId, ref: "User" },
     description: String,
   },
   {
-    timestamps: true,
+    timestamps: {
+      createdAt: "created",
+      updatedAt: "updated",
+    },
   }
 );
 
 const Settings = mongoose.model("Settings", SettingsSchema);
-
 export default Settings;

@@ -18,7 +18,13 @@ export const MediaSchema = new Schema(
     type: { type: String, default: "image" },
     mimeType: { type: String, default: "image/jpg" },
   },
-  { timestamps: true, collection: "media" }
+  {
+    timestamps: {
+      createdAt: "created",
+      updatedAt: "updated",
+    },
+    collection: "media",
+  }
 );
 
 MediaSchema.methods.getUrl = function () {

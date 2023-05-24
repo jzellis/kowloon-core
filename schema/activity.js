@@ -1,151 +1,191 @@
 import mongoose from "mongoose";
-import { convert, htmlToText } from "html-to-text";
-const Schema = mongoose.Schema,
-  ObjectId = mongoose.Types.ObjectId,
-  SALT_WORK_FACTOR = 10;
-const KEY = process.env.JWT_KEY;
 import Settings from "./settings.js";
-import User from "./user.js";
-import { ActorSchema } from "./actor.js";
-import sanitizeHtml from "sanitize-html";
+import ObjectSchema from "./object.js";
+import tensify from "tensify";
+import { ObjectId } from "mongoose";
 import Circle from "./circle.js";
+const vowelRegex = "^[aieouAIEOU].*";
+import Kowloon from "../index.js";
+import Actor from "./actor.js";
 
-const ActivitySchema = new Schema(
-  {
-    id: { type: String },
-    actor: ActorSchema,
-    type: String,
-    object: {
-      id: { type: String },
-
-      type: { type: String, default: "Note" },
-      actor: ActorSchema,
-      attachment: [
-        {
-          type: { type: String, default: "Image" },
-          content: String,
-          url: String,
-        },
-      ],
-      attributedTo: [ActorSchema],
-      audience: [ActorSchema],
-      content: String,
-      context: String,
-      name: String,
-      endTime: Date,
-      generator: {
-        type: { type: String, default: "Application" },
-        name: { type: String, default: "Kowloon" },
-        url: String,
-      },
-      icon: [
-        {
-          type: { type: String, default: "Image" },
-          name: { type: String, default: "Note Icon" },
-          url: { type: String },
-        },
-      ],
-      image: [
-        {
-          type: { type: String, default: "Image" },
-          name: { type: String, default: "Note Icon" },
-          url: { type: String },
-        },
-      ],
-      inReplyTo: Schema.Types.Mixed,
-      location: Schema.Types.Mixed,
-      preview: Schema.Types.Mixed,
-      published: { type: Date, default: Date.now() },
-      replies: [Schema.Types.Mixed],
-      likes: [Schema.Types.Mixed],
-      startTime: Date,
-      summary: String,
-      tags: [String],
-      updated: { type: Date, default: Date.now() },
-      url: String,
-      to: [String],
-      bto: [String],
-      cc: [String],
-      bcc: [String],
-      mediaType: { type: String, default: "text/html" },
-      duration: String,
-      deleted: Date,
-    },
-    target: ActorSchema,
-    summary: String,
-    _kowloon: {
-      isPublic: { type: Boolean, default: false },
-      owner: { type: ObjectId, ref: "User", required: true },
-      author: { type: ObjectId, ref: "User" },
-      read: Date,
-      bookmarked: Date,
-      viewCircles: [{ type: ObjectId, ref: "Circle" }],
-      commentCircles: [{ type: ObjectId, ref: "Circle" }],
-    },
-  },
-  {
-    strict: false,
-    strictPopulate: false,
-    collection: "activities",
-    timestamps: true,
+const sanitize = (thing) => {
+  if (thing) {
+    let newThing = thing;
+    for (const [key, value] of Object.entries(newThing)) {
+      if (value && value.length == 0) newThing[key] = undefined;
+    }
+    let fields = ["bto", "bcc", "_id", "_kowloon", "__v", "_owner"];
+    fields.forEach((e) => {
+      newThing[e] = undefined;
+    });
+    return newThing;
   }
-);
+};
+
+const ActivitySchema = ObjectSchema.clone();
+
+ActivitySchema.add({
+  _owner: { type: String, required: true },
+  _kowloon: {
+    isPublic: { type: Boolean, default: false },
+    publicCanComment: { type: Boolean, default: false },
+    read: { type: Boolean, default: false },
+    type: { type: String },
+    viewCircles: [String],
+    commentCircles: [String],
+    delivered: { type: Boolean, default: false },
+  },
+});
 
 ActivitySchema.pre("save", async function (next) {
-  this.object.content = sanitizeHtml(this.object.content, {
-    allowedTags: [...sanitizeHtml.defaults.allowedTags, ...["img", "a"]],
-  });
-  if (!this.object.summary)
-    this.object.summary = htmlToText(
-      this.object.content.split("</p>").slice(0, 1) + "</p>"
-    );
+  if (this.target && this.target.length > 0) {
+    this.target.map((a) => {
+      this.to.push(a.id);
+    });
+  }
+
+  if (this.object && this.object.actor && this.object.actor.id) {
+    this.to.push(this.object.actor.id);
+  }
+
+  if (this.inReplyTo.length > 0) {
+    this.inReplyTo.map((a) => {
+      if (a.actor) this.cc.push(a.actor.id);
+    });
+  }
+  if (this.attributedTo.length > 0) {
+    this.attributedTo.map((a) => {
+      if (a.actor) this.cc.push(a.actor.id);
+    });
+  }
+
+  if (this._kowloon.viewCircles && this._kowloon.viewCircles.length > 0) {
+    try {
+      let circles = await Circle.find({ id: this._kowloon.viewCircles });
+      let recipients = [];
+      circles.map((c) => {
+        c.items.map((i) => {
+          if (i.active == true) recipients.push(i.subject.id);
+        });
+      });
+      this.bcc = recipients;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  this.to = Array.from(new Set(this.to));
+  this.bto = Array.from(new Set(this.bto));
+  this.cc = Array.from(new Set(this.cc));
+  this.bcc = Array.from(new Set(this.bcc));
   next();
 });
 
-ActivitySchema.post("save", async function (doc) {
-  if (!doc.object.id) {
-    let domain = await Settings.findOne({ name: "domain" });
-    let user = await User.findOne({ _id: this._kowloon.owner });
-    domain = domain.value;
-    doc.object.id = `${domain}/@${user.username}/p/${doc._id}`;
-  }
+ActivitySchema.post("save", async function (doc, next) {
   if (!doc.id) {
     let domain = await Settings.findOne({ name: "domain" });
-    let user = await User.findOne({ _id: this._kowloon.owner });
-    domain = domain.value;
-    doc.id = `${domain}/@${user.username}/p/${doc._id}`;
+    let username = doc.actor.preferredUsername;
+    doc.id = `${domain.value}/@${username}/p/${this._id}`;
+    doc.save();
   }
-  doc.save();
 });
 
-ActivitySchema.methods.getViewCircles = async function () {
-  return await Circle.find({
-    _id: this._kowloon.viewCircles,
+ActivitySchema.post("save", async function (doc, next) {
+  if (!this.summary) {
+    let summary = `${this.actor.name} ${tensify(this.type).past.toLowerCase()}${
+      this.object
+        ? new RegExp(vowelRegex).test(this.object.type)
+          ? " an"
+          : " a"
+        : ""
+    }${this.object ? " " + this.object.type : ""}`;
+    this.summary = summary;
+  }
+  next();
+});
+
+ActivitySchema.methods.deliver = async function () {
+  if (this.to || this.bto || this.cc || this.bcc) {
+    let body = sanitize(this);
+    let to = this.to.length > 0 ? this.to : [];
+    let bto = this.bto && this.bto.length > 0 ? this.bto : [];
+    let cc = this.cc && this.cc.length > 0 ? this.cc : [];
+    let bcc = this.bcc && this.bcc.length > 0 ? this.bcc : [];
+
+    let recipients = Array.from(new Set([...to, ...bto, ...cc, ...bcc]));
+
+    recipients = recipients.filter((val) => val != this.actor.id);
+
+    let responses = [];
+    if (recipients.length > 0) {
+      recipients.map(async (r) => {
+        let actor = await Actor.findOne({ id: r });
+        let url = actor.inbox ? actor.inbox : actor.id + "/inbox";
+
+        let response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        if (response.ok) {
+          responses.push(await response.json());
+        }
+      });
+    }
+  }
+};
+
+ActivitySchema.methods.canView = function (actorId) {
+  return this._kowloon.isPublic == true ||
+    (this.bcc.length > 0 && this.bcc.indexOf(actorId) != -1)
+    ? true
+    : false;
+};
+
+ActivitySchema.methods.canComment = async function (actorId) {
+  let circles = await Circle.find({ id: this._kowloon.commentCircles });
+
+  let commenters = [];
+  circles.map((c) => {
+    c.items.map((i) => {
+      if (i.active == true) commenters.push(i.subject.id);
+    });
   });
+  return this._kowloon.publicCanComment == true ||
+    (commenters.length > 0 && commenters.indexOf(actorId) != -1)
+    ? true
+    : false;
 };
 
-ActivitySchema.methods.getCommentCircles = async function () {
-  return await Circle.find({
-    _id: this._kowloon.commentCircles,
-  });
-};
+// ActivitySchema.methods.deliver = async function () {
+//   try {
+//     let body = sanitize(this);
+//     let recipients = Array.from(
+//       new Set([...this.to, ...this.bto, ...this.cc, ...this.bcc])
+//     );
+//     recipients = recipients.filter((val) => val != this.owner);
 
-ActivitySchema.methods.actorCanView = async function (actorId) {
-  let actorCircles = await Circle.find({ "members.actor": actorId }, "_id");
-  actorCircles = actorCircles.map((c) => c._id);
-  let canView = actorCircles.some((r) =>
-    this._kowloon.viewCircles.includes(r.toString())
-  );
-  return canView;
-};
+//     responses = [];
+//     console.log("Delivering sanitized activity:", body);
 
-ActivitySchema.methods.actorCanComment = async function (actorId) {
-  let actorCircles = await Circle.find({ "members.actor": actorId }, "_id");
-  actorCircles = actorCircles.map((c) => c._id);
-  return actorCircles.some((r) =>
-    this._kowloon.commentCircles.includes(r.toString())
-  );
-};
+//     recipients.map(async (r) => {
+//       let url = r.inbox ? r.inbox : r.id + "/inbox";
+//       let response = await fetch(url, {
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body,
+//       });
+
+//       responses.push(await response.json());
+//     });
+//     console.log("Outbox responses:", responses);
+//   } catch (e) {
+//     console.error(e);
+//   }
+// };
 
 const Activity = mongoose.model("Activity", ActivitySchema);
 

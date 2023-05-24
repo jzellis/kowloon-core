@@ -33,7 +33,10 @@ const UserSchema = new Schema(
     lastUpdate: { type: Date, default: Date.now },
   },
   {
-    timestamps: true,
+    timestamps: {
+      createdAt: "created",
+      updatedAt: "updated",
+    },
   }
 );
 
