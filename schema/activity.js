@@ -1,191 +1,172 @@
 import mongoose from "mongoose";
-import Settings from "./settings.js";
 import ObjectSchema from "./object.js";
+import CollectionSchema from "./collection.js";
 import tensify from "tensify";
+const vowelRegex = /^[aieouAIEOU].*/;
+import User from "./user.js";
 import { ObjectId } from "mongoose";
-import Circle from "./circle.js";
-const vowelRegex = "^[aieouAIEOU].*";
-import Kowloon from "../index.js";
-import Actor from "./actor.js";
-
-const sanitize = (thing) => {
-  if (thing) {
-    let newThing = thing;
-    for (const [key, value] of Object.entries(newThing)) {
-      if (value && value.length == 0) newThing[key] = undefined;
-    }
-    let fields = ["bto", "bcc", "_id", "_kowloon", "__v", "_owner"];
-    fields.forEach((e) => {
-      newThing[e] = undefined;
-    });
-    return newThing;
-  }
-};
+import sanitizeHtml from "sanitize-html";
+import { htmlToText } from "html-to-text";
 
 const ActivitySchema = ObjectSchema.clone();
 
 ActivitySchema.add({
-  _owner: { type: String, required: true },
+  owner: { type: ObjectId, ref: "User", required: true },
+  actor: { type: String, required: true },
+  "@context": {
+    type: String,
+    default: "https://www.w3.org/ns/activitystreams",
+  },
+  object: {
+    replies: {
+      type: CollectionSchema,
+      default: undefined,
+    },
+    likes: {
+      type: CollectionSchema,
+      default: undefined,
+    },
+  },
+  public: { type: Boolean, default: undefined },
   _kowloon: {
     isPublic: { type: Boolean, default: false },
     publicCanComment: { type: Boolean, default: false },
-    read: { type: Boolean, default: false },
-    type: { type: String },
-    viewCircles: [String],
-    commentCircles: [String],
-    delivered: { type: Boolean, default: false },
+    canComment: [String],
+    seen: { type: Boolean, default: false },
+    delivery: [Object],
   },
 });
 
 ActivitySchema.pre("save", async function (next) {
-  if (this.target && this.target.length > 0) {
-    this.target.map((a) => {
-      this.to.push(a.id);
+  // This sanitizes and normalizes the activity
+  const owner = await User.findOne({ _id: this.owner });
+  // This creates the activity's ID
+  this.id = `${owner.actor.id}/p/${this._id}`;
+  // If the activity object exists and has no id, copy the parent activity id to it
+  if (this.object) this.object.id = !this.object.id ? this.id : this.object.id;
+  let originalObject = this.object;
+  this.public = this._kowloon.isPublic == true ? true : undefined;
+
+  // This converts the actor field to a string of the actor's id, because we don't want to store actor info in the activity (we want to always retrieve it)
+  this.actor =
+    typeof this.actor != "string" && this.actor.id ? this.actor.id : this.actor;
+
+  // Ditto with the target
+  if (this.target)
+    this.target =
+      typeof this.target != "string" && this.target.id
+        ? this.target.id
+        : this.target;
+
+  // If there's an object but it doesn't have an attributedTo field, add the activity actor to the object attributedTo field
+  if (
+    this.object &&
+    typeof this.object == "object" &&
+    Object.keys(this.object).length > 0 &&
+    !this.object.attributedTo
+  )
+    this.object.attributedTo = this.actor;
+
+  // If the activity has an object and the activity and the object don't have synced to, bto, cc or bcc fields, this syncs them.
+  if (this.object && typeof this.object == "object")
+    ["to", "bto", "cc", "bcc"].map((i) => {
+      if (this[i] && typeof this.object[i] != "array") this[i] = [this[i]];
+      if (this.object && this.object[i] && typeof this.object[i] != "array")
+        this.object[i] = [this.object[i]];
+      if (this.object && this.object[i] && !this[i]) this[i] = this.object[i];
+      if (this.object && this.object[i] && this[i])
+        this[i] = [...this[i], ...this.object[i]];
+      if (this[i] && this[i].length > 0) this[i] = Array.from(new Set(this[i]));
     });
+
+  // This creates the content for the post from the object source field (via the ActivityPub spec)
+  // Right now this assumes the source is HTML, but I'll add Markdown later
+  if (this.object && this.object.source && !this.object.content) {
+    this.object.content =
+      !this.object.source.mediaType ||
+      this.object.source.mediaType == "text/html"
+        ? sanitizeHtml(this.object.source.content)
+        : this.object.source.content;
+    this.object.summary =
+      this.object.summary ||
+      htmlToText(this.object.content).split(" ").splice(0, 16).join(" ") + "…";
   }
 
-  if (this.object && this.object.actor && this.object.actor.id) {
-    this.to.push(this.object.actor.id);
-  }
+  // This creates the summaries for the user and general notifications
 
-  if (this.inReplyTo.length > 0) {
-    this.inReplyTo.map((a) => {
-      if (a.actor) this.cc.push(a.actor.id);
-    });
+  let summaryActor;
+  let summaryUser = await User.findOne({ "actor.id": this.actor });
+  if (!summaryUser) {
+    let response = await fetch(this.actor);
+    summaryActor = await response.json();
+  } else {
+    summaryActor = summaryUser.actor;
   }
-  if (this.attributedTo.length > 0) {
-    this.attributedTo.map((a) => {
-      if (a.actor) this.cc.push(a.actor.id);
-    });
+  let verb = tensify(this.type).past.toLowerCase();
+  verb = verb == "created" ? "added" : verb;
+  let whatThing = "";
+  if (this.object && this.object.type)
+    whatThing = `${vowelRegex.test(this.object.type) ? "an" : "a"} ${
+      this.object.type
+    }`;
+  if (!this.object.name && this.result) whatThing = this.result.name;
+  let excerpt = "";
+  if (this.object && this.object.content)
+    excerpt =
+      ': "' +
+      (this.object.name
+        ? this.object.name
+        : htmlToText(this.object.content).split(" ").splice(0, 10).join(" ")) +
+      (!this.object.name ? "..." : "") +
+      '"';
+  if (this.object.inReplyTo) {
+    verb = "replied to";
+    let rresponse = await fetch(this.object.inReplyTo);
+    let original = await rresponse.json();
+    whatThing = `${vowelRegex.test(original.object.type) ? "an" : "a"} ${
+      original.object.type
+    }`;
+    excerpt =
+      ': "' +
+      (original.object.name
+        ? original.object.name
+        : htmlToText(original.object.content)
+            .split(" ")
+            .splice(0, 10)
+            .join(" ")) +
+      (!original.object.name ? "..." : "") +
+      '"';
   }
+  let firstSummary = `You ${verb} ${whatThing}${excerpt}`;
+  let secondSummary = `${summaryActor.name} ${verb} ${whatThing}${excerpt}`;
+  secondSummary =
+    summaryActor.name != whatThing
+      ? secondSummary
+      : `${whatThing} joined the server`;
+  this.summary = { actor: firstSummary, public: secondSummary };
 
-  if (this._kowloon.viewCircles && this._kowloon.viewCircles.length > 0) {
-    try {
-      let circles = await Circle.find({ id: this._kowloon.viewCircles });
-      let recipients = [];
-      circles.map((c) => {
-        c.items.map((i) => {
-          if (i.active == true) recipients.push(i.subject.id);
-        });
-      });
-      this.bcc = recipients;
-    } catch (e) {
-      console.log(e);
-    }
-  }
+  // This creates totalItems fields for the object replies and likes fields
+  if (this.object && this.object.replies)
+    this.object.replies.totalItems = this.object.replies.items.length;
+  if (this.object && this.object.likes)
+    this.object.likes.totalItems = this.object.likes.items.length;
 
-  this.to = Array.from(new Set(this.to));
-  this.bto = Array.from(new Set(this.bto));
-  this.cc = Array.from(new Set(this.cc));
-  this.bcc = Array.from(new Set(this.bcc));
+  if (!originalObject) this.object.replies = this.object.likes = undefined;
   next();
 });
 
-ActivitySchema.post("save", async function (doc, next) {
-  if (!doc.id) {
-    let domain = await Settings.findOne({ name: "domain" });
-    let username = doc.actor.preferredUsername;
-    doc.id = `${domain.value}/@${username}/p/${this._id}`;
-    doc.save();
-  }
-});
+ActivitySchema.methods.getRecipients = function () {
+  let recipients = this.to ? this.to : [];
+  recipients = this.bto ? [...recipients, ...this.bto] : recipients;
+  recipients = this.cc ? [...recipients, ...this.cc] : recipients;
+  recipients = this.bcc ? [...recipients, ...this.bcc] : recipients;
 
-ActivitySchema.post("save", async function (doc, next) {
-  if (!this.summary) {
-    let summary = `${this.actor.name} ${tensify(this.type).past.toLowerCase()}${
-      this.object
-        ? new RegExp(vowelRegex).test(this.object.type)
-          ? " an"
-          : " a"
-        : ""
-    }${this.object ? " " + this.object.type : ""}`;
-    this.summary = summary;
-  }
-  next();
-});
-
-ActivitySchema.methods.deliver = async function () {
-  if (this.to || this.bto || this.cc || this.bcc) {
-    let body = sanitize(this);
-    let to = this.to.length > 0 ? this.to : [];
-    let bto = this.bto && this.bto.length > 0 ? this.bto : [];
-    let cc = this.cc && this.cc.length > 0 ? this.cc : [];
-    let bcc = this.bcc && this.bcc.length > 0 ? this.bcc : [];
-
-    let recipients = Array.from(new Set([...to, ...bto, ...cc, ...bcc]));
-
-    recipients = recipients.filter((val) => val != this.actor.id);
-
-    let responses = [];
-    if (recipients.length > 0) {
-      recipients.map(async (r) => {
-        let actor = await Actor.findOne({ id: r });
-        let url = actor.inbox ? actor.inbox : actor.id + "/inbox";
-
-        let response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.ok) {
-          responses.push(await response.json());
-        }
-      });
-    }
-  }
+  return Array.from(new Set(recipients));
 };
 
-ActivitySchema.methods.canView = function (actorId) {
-  return this._kowloon.isPublic == true ||
-    (this.bcc.length > 0 && this.bcc.indexOf(actorId) != -1)
-    ? true
-    : false;
+ActivitySchema.methods.canComment = function (id) {
+  return this._kowloon.canComment.indexOf(id) != -1;
 };
-
-ActivitySchema.methods.canComment = async function (actorId) {
-  let circles = await Circle.find({ id: this._kowloon.commentCircles });
-
-  let commenters = [];
-  circles.map((c) => {
-    c.items.map((i) => {
-      if (i.active == true) commenters.push(i.subject.id);
-    });
-  });
-  return this._kowloon.publicCanComment == true ||
-    (commenters.length > 0 && commenters.indexOf(actorId) != -1)
-    ? true
-    : false;
-};
-
-// ActivitySchema.methods.deliver = async function () {
-//   try {
-//     let body = sanitize(this);
-//     let recipients = Array.from(
-//       new Set([...this.to, ...this.bto, ...this.cc, ...this.bcc])
-//     );
-//     recipients = recipients.filter((val) => val != this.owner);
-
-//     responses = [];
-//     console.log("Delivering sanitized activity:", body);
-
-//     recipients.map(async (r) => {
-//       let url = r.inbox ? r.inbox : r.id + "/inbox";
-//       let response = await fetch(url, {
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body,
-//       });
-
-//       responses.push(await response.json());
-//     });
-//     console.log("Outbox responses:", responses);
-//   } catch (e) {
-//     console.error(e);
-//   }
-// };
 
 const Activity = mongoose.model("Activity", ActivitySchema);
 
