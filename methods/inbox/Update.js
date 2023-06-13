@@ -1,14 +1,21 @@
-import { Activity, User, Settings } from "../../schema/index.js";
-export default async function handler(activity) {
-  let _this = this;
-  let owner = await User.findOne({ "actor.id": activity.actor });
-  // if (this._this.isBlocked(owner, activity.actor)) return _this.sanitize(activity);
-  const object = activity.object;
-  let result;
-  result = await Activity.findOneAndUpdate(
-    { "object.id": activity.object.id, owner: owner },
-    { $set: { object } }
+import { Activity, User } from "../../schema/index.js";
+export default async function handler(message) {
+  await Activity.findOneAndUpdate(
+    { id: message.activity.id, owner: this.user._id },
+    {
+      $set: {
+        "object.name": message.activity.object.name,
+        "object.content": message.activity.object.content,
+        "object.tags": message.activity.object.tags,
+        "object.url": message.activity.object.url,
+        "object.image": message.activity.object.image,
+      },
+    }
   );
-  activity.result = this._this.sanitize(result);
-  return activity;
+
+  //   if (["Application", "Group", "Organization", "Person", "Service"].indexOf(message.activity.object.type) >= 0) {
+  //   await User.findOneAndUpdate({id: message.})
+  // }
+
+  return message;
 }

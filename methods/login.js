@@ -12,7 +12,12 @@ export default async function handler({ username, password }) {
   } else {
     return {
       token: user.accessToken,
-      actor: this.sanitize(user.actor),
+      user: {
+        username: user.username,
+        email: user.email,
+        actor: user.actor,
+        prefs: user.prefs,
+      },
     };
   }
 }

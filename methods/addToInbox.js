@@ -1,4 +1,4 @@
-import { Activity } from "../schema/index.js";
+import { Activity, Inbox, User } from "../schema/index.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const methodDir = __dirname + "/inbox/";
 
-const InboxParser = {};
+const InboxParser = { _this: this };
 
 const verbs = await fs.readdirSync(methodDir);
 for (let j = 0; j < verbs.length; j++) {
@@ -23,10 +23,12 @@ for (let j = 0; j < verbs.length; j++) {
   }
 }
 
-export default async function handler(activity) {
-  InboxParser._this = this;
-  activity.owner = activity.owner || this.user._id;
-  activity = await Activity.create(activity);
-  let created = await InboxParser[activity.type](activity);
-  return this.sanitize(activity);
+export default async function handler(message) {
+  let user = await User.findOne({ id: message.to });
+  let canSend = user.actor.blocked.items.indexOf(message.from) == -1;
+  if (canSend) {
+    if (InboxParser[message.activity.type])
+      message = await InboxParser[message.activity.type](message);
+    return await Inbox.create(message);
+  }
 }

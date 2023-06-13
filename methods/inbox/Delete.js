@@ -1,17 +1,8 @@
-import { Activity, User, Settings } from "../../schema/index.js";
-export default async function handler(activity) {
-  let deletedActivity = await Activity.findOne({
-    id: activity.object,
-    actor: activity.actor,
-  });
-  let formerType =
-    deletedActivity.object && deletedActivity.object.type
-      ? deletedActivity.object.type
-      : null;
-  let deleted = new Date();
-  deleted = deleted.toISOString();
-  let result = await Activity.findOneAndUpdate(
-    { id: activity.object, actor: activity.actor },
+import { Activity, User } from "../../schema/index.js";
+export default async function handler(message) {
+  let owner = await User.findOne({ id: message.from });
+  await Activity.findOneAndUpdate(
+    { id: message.activity.object, owner: owner._id },
     {
       $set: {
         object: {
@@ -22,6 +13,5 @@ export default async function handler(activity) {
       },
     }
   );
-  activity.result = this._this.sanitize(result);
-  return activity;
+  return message;
 }

@@ -1,7 +1,6 @@
 import * as dotenv from "dotenv";
 import mongoose from "mongoose";
-// import bcrypt from "bcryptjs";
-// import jwt from "jsonwebtoken";
+import { createClient } from "redis";
 import { Activity, User, Settings } from "../schema/index.js";
 dotenv.config();
 
@@ -25,5 +24,20 @@ export default async function handler() {
     this.settings[setting.name] = setting.value;
   });
 
-  return true;
+  const client = createClient();
+
+  client.on("error", (err) => console.log("Redis Client Error", err));
+
+  await client.connect();
+
+  this.redis = client;
+
+  let allUsers = await User.find({}, "actor");
+
+  await Promise.all(
+    allUsers.map(async (u) => {
+      await this.redis.set(this.hash(u.actor.id), JSON.stringify(u.actor));
+      return true;
+    })
+  );
 }

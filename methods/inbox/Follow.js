@@ -1,12 +1,12 @@
-import { Activity, User, Settings } from "../../schema/index.js";
-export default async function handler(activity) {
-  let result = await User.findOneAndUpdate(
-    { "actor.id": activity.object },
+import { Activity, User } from "../../schema/index.js";
+export default async function handler(message) {
+  await User.findOneAndUpdate(
+    { id: message.activity.target },
     {
-      $push: { "actor.followers.items": activity.actor },
-      $inc: { "actor.followers.totalItems": 1 },
+      $push: { "actor.followers.items": message.from },
+      $inc: { "actor.followers.items": 1 },
     }
   );
-  activity.result = this._this.sanitize(result);
-  return activity;
+
+  return message;
 }

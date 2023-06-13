@@ -1,14 +1,10 @@
 import { Activity, User, Settings } from "../../schema/index.js";
 export default async function handler(activity) {
-  let response = await this.fetchGet(activity.object.id);
-  let original = await response.json();
-  let actor = (await (original.actor && typeof original.actor == "string"))
-    ? original.actor
-    : original.actor.id;
+  let original = await getActivity(activity.target);
   if (activity.bto) {
-    activity.bto.push(actor);
+    activity.bto.push(originalactor);
   } else {
-    activity.bto = [actor];
+    activity.bto = [original.actor];
   }
   return activity;
 }

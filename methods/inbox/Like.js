@@ -1,28 +1,13 @@
-import { Activity, User, Settings } from "../../schema/index.js";
-export default async function handler(activity) {
-  const object =
-    activity.object && typeof activity.object == "object" && activity.object.id
-      ? activity.object.id
-      : activity.object;
-  let published = new Date();
-  const liked = await Activity.findOneAndUpdate(
+import { Activity, User } from "../../schema/index.js";
+export default async function handler(message) {
+  console.log("Inbox Liked Message: ", message);
+  await Activity.findOneAndUpdate(
+    { "object.id": message.activity.target },
     {
-      id: activity.target,
-    },
-    {
-      $push: {
-        "object.likes.items": {
-          ...activity.object,
-          published: published.toISOString(),
-        },
-      },
-
-      $inc: {
-        "object.likes.totalItems": 1,
-      },
-    },
-    { new: true }
+      $push: { "object.likes.items": message.activity.actor },
+      $inc: { "object.likes.totalItems": 1 },
+    }
   );
-  activity.result = this._this.sanitize(liked);
-  return activity;
+
+  return message;
 }

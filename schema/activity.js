@@ -7,6 +7,10 @@ import User from "./user.js";
 import { ObjectId } from "mongoose";
 import sanitizeHtml from "sanitize-html";
 import { htmlToText } from "html-to-text";
+import Settings from "./settings.js";
+
+const webfinger = (id) =>
+  `http://${id.split("@")[2]}/.well-known/webfinger?resource=acct:${id}`;
 
 const ActivitySchema = ObjectSchema.clone();
 
@@ -20,138 +24,148 @@ ActivitySchema.add({
   object: {
     replies: {
       type: CollectionSchema,
-      default: undefined,
+      default: {
+        type: "OrderedCollection",
+        items: [],
+      },
     },
     likes: {
       type: CollectionSchema,
       default: undefined,
     },
   },
-  public: { type: Boolean, default: undefined },
-  _kowloon: {
-    isPublic: { type: Boolean, default: false },
-    publicCanComment: { type: Boolean, default: false },
-    canComment: [String],
-    seen: { type: Boolean, default: false },
-    delivery: [Object],
-  },
+  public: { type: Boolean, default: false },
+  publicCanComment: { type: Boolean, default: false },
+  whoCanComment: [String],
 });
 
 ActivitySchema.pre("save", async function (next) {
-  // This sanitizes and normalizes the activity
+  const fullDomain = (await Settings.findOne({ name: "domain" })).value;
+  let domain = fullDomain.split("://")[1];
   const owner = await User.findOne({ _id: this.owner });
-  // This creates the activity's ID
-  this.id = `${owner.actor.id}/p/${this._id}`;
-  // If the activity object exists and has no id, copy the parent activity id to it
-  if (this.object) this.object.id = !this.object.id ? this.id : this.object.id;
-  let originalObject = this.object;
-  this.public = this._kowloon.isPublic == true ? true : undefined;
 
-  // This converts the actor field to a string of the actor's id, because we don't want to store actor info in the activity (we want to always retrieve it)
-  this.actor =
-    typeof this.actor != "string" && this.actor.id ? this.actor.id : this.actor;
+  //Normalize everything
+  this.id = `${fullDomain}/@${owner.username}/posts/${this._id}`;
+  this.actor = owner.actor.id;
 
-  // Ditto with the target
-  if (this.target)
-    this.target =
-      typeof this.target != "string" && this.target.id
-        ? this.target.id
-        : this.target;
-
-  // If there's an object but it doesn't have an attributedTo field, add the activity actor to the object attributedTo field
+  // If this has an Object that's an object, not a string, do this stuff
   if (
     this.object &&
     typeof this.object == "object" &&
-    Object.keys(this.object).length > 0 &&
-    !this.object.attributedTo
-  )
-    this.object.attributedTo = this.actor;
+    Object.keys(this.object).length > 0
+  ) {
+    this.object.published = this.published;
+    this.object.attributedTo = this.object.attributedTo
+      ? this.object.attributedTo
+      : this.actor;
 
-  // If the activity has an object and the activity and the object don't have synced to, bto, cc or bcc fields, this syncs them.
-  if (this.object && typeof this.object == "object")
+    this.object.actor = this.object.actor ? this.object.actor : this.actor;
+
+    // These fields should be identical on both the main Activity object and its object object
+    if (this.object.inReplyTo && !this.inReplyTo)
+      this.inReplyTo = this.object.inReplyTo;
+    if (this.inReplyTo && !this.object.inReplyTo)
+      this.object.inReplyTo = this.inReplyTo;
+    if (!this.object.id) this.object.id = this.id;
+
+    //If the object doesn't have a replies field, create one
+    this.object.replies = this.object.replies || {
+      type: "OrderedCollection",
+      totalItems: 0,
+      items: [],
+    };
+
+    this.object.likes = this.object.likes || {
+      type: "OrderedCollection",
+      totalItems: 0,
+      items: [],
+    };
+
     ["to", "bto", "cc", "bcc"].map((i) => {
+      // If the object to/bto/cc/bcc isn't an array. make it an array
       if (this[i] && typeof this.object[i] != "array") this[i] = [this[i]];
       if (this.object && this.object[i] && typeof this.object[i] != "array")
         this.object[i] = [this.object[i]];
+      // If the activity to/bto/cc/bcc doesn't exist but the object has them, create them on the activity
+
       if (this.object && this.object[i] && !this[i]) this[i] = this.object[i];
       if (this.object && this.object[i] && this[i])
         this[i] = [...this[i], ...this.object[i]];
       if (this[i] && this[i].length > 0) this[i] = Array.from(new Set(this[i]));
     });
 
-  // This creates the content for the post from the object source field (via the ActivityPub spec)
-  // Right now this assumes the source is HTML, but I'll add Markdown later
-  if (this.object && this.object.source && !this.object.content) {
-    this.object.content =
-      !this.object.source.mediaType ||
-      this.object.source.mediaType == "text/html"
-        ? sanitizeHtml(this.object.source.content)
-        : this.object.source.content;
-    this.object.summary =
-      this.object.summary ||
-      htmlToText(this.object.content).split(" ").splice(0, 16).join(" ") + "…";
+    // Create the content from the source if it exists
+    if (this.object.source && !this.object.content) {
+      this.object.source.mediaType =
+        this.object.source.mediaType || "text/html";
+
+      this.object.content = this.object.source.content;
+      // !this.object.source.mediaType ||
+      // this.object.source.mediaType == "text/html"
+      //   ? sanitizeHtml(this.object.source.content, {
+      //       allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
+      //       allowedAttributes: {
+      //         img: ["src"],
+      //       },
+      //     })
+      //   : this.object.source.content;
+      this.object.summary =
+        this.object.summary ||
+        htmlToText(this.object.content).split(" ").splice(0, 16).join(" ") +
+          "…";
+    }
   }
 
-  // This creates the summaries for the user and general notifications
+  // Now let's handle the summary
+  let response,
+    target,
+    targetActor,
+    verb,
+    article,
+    excerpt,
+    summary,
+    preposition;
+  const defaultPronouns = (await Settings.findOne({ name: "defaultPronouns" }))
+    .value;
+  let possAdj = defaultPronouns.possAdj;
 
-  let summaryActor;
-  let summaryUser = await User.findOne({ "actor.id": this.actor });
-  if (!summaryUser) {
-    let response = await fetch(this.actor);
-    summaryActor = await response.json();
-  } else {
-    summaryActor = summaryUser.actor;
+  if (this.target) {
+    response = await fetch(this.target);
+    let targetPost = await response.json();
+    response = await fetch(webfinger(targetPost.actor));
+    targetActor = await response.json();
   }
-  let verb = tensify(this.type).past.toLowerCase();
-  verb = verb == "created" ? "added" : verb;
-  let whatThing = "";
-  if (this.object && this.object.type)
-    whatThing = `${vowelRegex.test(this.object.type) ? "an" : "a"} ${
-      this.object.type
-    }`;
-  if (!this.object.name && this.result) whatThing = this.result.name;
-  let excerpt = "";
-  if (this.object && this.object.content)
-    excerpt =
-      ': "' +
-      (this.object.name
-        ? this.object.name
-        : htmlToText(this.object.content).split(" ").splice(0, 10).join(" ")) +
-      (!this.object.name ? "..." : "") +
-      '"';
-  if (this.object.inReplyTo) {
-    verb = "replied to";
-    let rresponse = await fetch(this.object.inReplyTo);
-    let original = await rresponse.json();
-    whatThing = `${vowelRegex.test(original.object.type) ? "an" : "a"} ${
-      original.object.type
-    }`;
-    excerpt =
-      ': "' +
-      (original.object.name
-        ? original.object.name
-        : htmlToText(original.object.content)
-            .split(" ")
-            .splice(0, 10)
-            .join(" ")) +
-      (!original.object.name ? "..." : "") +
-      '"';
+
+  article = vowelRegex.test(this.object.type) ? "an" : "a";
+  excerpt = this.object.name || this.object.content || null;
+
+  switch (true) {
+    case this.type == "Create":
+      verb = "Add";
+      break;
+    case owner.actor.pronouns && owner.actor.pronouns.possAdj:
+      possAdj = owner.actor.pronouns.possAdj;
+      break;
+    case this.inReplyTo:
+      verb = "Reply";
+      preposition = "to";
+      excerpt = this.target.object.name || this.object.target.content || null;
+      break;
   }
-  let firstSummary = `You ${verb} ${whatThing}${excerpt}`;
-  let secondSummary = `${summaryActor.name} ${verb} ${whatThing}${excerpt}`;
-  secondSummary =
-    summaryActor.name != whatThing
-      ? secondSummary
-      : `${whatThing} joined the server`;
-  this.summary = { actor: firstSummary, public: secondSummary };
+  verb = verb ? tensify(verb).past.toLowerCase() : null;
+  excerpt = `${
+    excerpt ? htmlToText(excerpt).split(" ").splice(0, 10).join(" ") : ""
+  }`;
 
-  // This creates totalItems fields for the object replies and likes fields
-  if (this.object && this.object.replies)
-    this.object.replies.totalItems = this.object.replies.items.length;
-  if (this.object && this.object.likes)
-    this.object.likes.totalItems = this.object.likes.items.length;
-
-  if (!originalObject) this.object.replies = this.object.likes = undefined;
+  summary = `${verb} ${article} ${preposition || ""}${
+    targetActor ? targetActor + "'s " : ""
+  }${this.object.type}${excerpt ? ": " + excerpt : " "}${
+    !this.object.name ? "..." : ""
+  }`;
+  this.summary = {
+    you: "You " + summary,
+    others: owner.actor.name + " " + summary,
+  };
   next();
 });
 

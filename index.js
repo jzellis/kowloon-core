@@ -1,13 +1,7 @@
-// import kowloon from "./classes/kowloon.js";
-
-// const Kowloon = new kowloon();
-// await Kowloon.init();
-// // await Kowloon.reset();
-
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-
+import { createClient } from "redis";
 const __filename = fileURLToPath(import.meta.url);
 
 const __dirname = path.dirname(__filename);
@@ -32,6 +26,7 @@ const Kowloon = {
   subject: null,
   sanitizedFields: "-owner -_id -__v -_kowloon -bto -bcc -password",
   testing: true,
+  redis: null,
 };
 
 const verbs = await fs.readdirSync(methodDir);
