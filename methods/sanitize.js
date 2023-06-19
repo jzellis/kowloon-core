@@ -22,9 +22,9 @@ export default function handler(a) {
       newObj[e] = undefined;
     });
     if (a.prefs && a.prefs.publicFollowers && a.prefs.publicFollowers == false)
-      a.actor.followers = undefined;
+      a.followers = undefined;
     if (a.prefs && a.prefs.publicFollowers && a.prefs.publicFollowing == false)
-      a.actor.following = undefined;
+      a.following = undefined;
     return newObj;
   }
 }

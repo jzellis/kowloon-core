@@ -1,14 +1,10 @@
 export default function handler(q) {
-  let $or =
-    !this.actor || !this.actor.id
-      ? [{ "_kowloon.isPublic": true }]
-      : [
-          { "_kowloon.isPublic": true },
-          { to: this.actor.id },
-          { bto: this.actor.id },
-          { cc: this.actor.id },
-          { bcc: this.actor.id },
-        ];
+  let $or = [
+    { to: this.user.id },
+    { bto: this.user.id },
+    { cc: this.user.id },
+    { bcc: this.user.id },
+  ];
   return {
     ...q,
     $or,

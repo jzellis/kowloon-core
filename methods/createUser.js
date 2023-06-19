@@ -12,6 +12,7 @@ export default async function handler(
     icon,
     urls,
     isAdmin,
+    pronouns,
   }
 ) {
   try {
@@ -21,7 +22,7 @@ export default async function handler(
       password: user.password,
       email: user.email,
       actor: {
-        id: `@${user.username}@${this.settings.domain.split("//")[1]}`,
+        id: `@${user.username}${this.settings.apDomain}`,
         type: "Person",
         name: user.name,
         preferredUsername: user.username,
@@ -33,9 +34,7 @@ export default async function handler(
         icon: {
           type: "Image",
           name: user.name,
-          url:
-            user.icon ||
-            `${this.settings.domain}/images/avatars/${user.username}.png`,
+          url: user.icon || `${this.settings.domain}/images/avatars/avatar.png`,
         },
         url: user.urls.map((u) => {
           return { href: u };
@@ -49,6 +48,7 @@ export default async function handler(
             items: [],
           },
         ],
+        pronouns: pronouns || this.settings.defaultPronouns,
       },
 
       prefs: {

@@ -39,6 +39,7 @@ export default async function handler(activity) {
     activity.cc = [activity.actor];
   }
   activity = await Activity.create(activity);
+
   if (OutboxParser[activity.type])
     activity = await OutboxParser[activity.type](activity);
   let recipients = activity.getRecipients();

@@ -19,7 +19,57 @@ export default async function handler() {
   );
   // }
 
-  const settings = await Settings.find({});
+  let settings = await Settings.find();
+  if (settings.length == 0) {
+    let defaults = [
+      {
+        name: "setup",
+        description: "Has the site been set up?",
+        value: false,
+      },
+      {
+        name: "title",
+        description: "The title of your site",
+        value: "My Kowloon Server",
+      },
+
+      {
+        name: "domain",
+        description: "Your site's domain",
+        value: "http://localhost:3001",
+      },
+      {
+        name: "apDomain",
+        description: "The ActivityPub domain of your site",
+        value: "@localhost:3001",
+      },
+      {
+        name: "uploadDir",
+        description: "The directory for uploads",
+        value: "./uploads",
+      },
+      {
+        name: "registrationIsOpen",
+        description: "Can anyone create an account on your site?",
+        value: false,
+      },
+      {
+        name: "defaultPronouns",
+        description: "The default pronouns for users",
+        value: {
+          subject: "they",
+          object: "them",
+          possAdj: "their",
+          possPro: "theirs",
+          reflexive: "themselves",
+        },
+      },
+    ];
+
+    await Promise.all(defaults.map(async (s) => await Settings.create(s)));
+
+    settings = await Settings.find();
+  }
   settings.forEach((setting) => {
     this.settings[setting.name] = setting.value;
   });
