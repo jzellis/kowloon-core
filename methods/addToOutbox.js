@@ -26,7 +26,7 @@ for (let j = 0; j < verbs.length; j++) {
 export default async function handler(activity) {
   activity.owner = activity.owner || this.user ? this.user._id : undefined;
   let owner = await User.findOne({ _id: activity.owner });
-  if (!owner) return {};
+  if (!owner) return { error: "No owner found" };
   activity.actor = owner.actor.id;
   if (activity.public == true && !activity.inReplyTo)
     activity.cc =
@@ -38,11 +38,17 @@ export default async function handler(activity) {
   } else {
     activity.cc = [activity.actor];
   }
-  activity = await Activity.create(activity);
-
-  if (OutboxParser[activity.type])
+  try {
+    activity = await Activity.create(activity);
+  } catch (e) {
+    console.log(e);
+  }
+  if (OutboxParser[activity.type]) {
     activity = await OutboxParser[activity.type](activity);
+  }
+
   let recipients = activity.getRecipients();
+
   let outboxItems = [];
   if (recipients.length > 0) {
     await Promise.all(

@@ -10,20 +10,20 @@ export default async function handler({
   types = types || ["Note", "Activity", "Image", "Link"];
   let q = { to, "activity.inReplyTo": { $exists: false } };
   if (read) q.read = read;
-  if (!showMine || showMine == false) q["activity.actor"] = { $ne: to };
+  if (showMine == false) q["activity.actor"] = { $ne: to };
   if (actors && typeof actors === "array")
     q["activity.actor"] = { $in: actors };
   page = page || 1;
   let limit = 10;
-  console.log(q);
   let items = await Inbox.find(q, "activity")
-    .sort("-received")
+    .sort("-activity.published")
     .skip((page - 1) * limit)
     .limit(limit);
   items = await Promise.all(
     items.map(async (i, idx) => {
       i.activity.object = await this.getObject(i.activity.object);
-      if (types.indexOf(i.activity.object.type) == -1) return false;
+      if (!i.activity.object || types.indexOf(i.activity.object.type) == -1)
+        return false;
       i.activity.actor = await this.getActor(i.activity.actor);
       i.activity.object.actor = await this.getActor(i.activity.object.actor);
       i.activity.object.replies.items = await Promise.all(

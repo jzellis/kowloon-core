@@ -130,15 +130,19 @@ ActivitySchema.pre("save", async function (next) {
   let possAdj = defaultPronouns.possAdj;
 
   if (this.target) {
-    response = await fetch(this.target);
-    let targetPost = await response.json();
-    response = await fetch(webfinger(targetPost.actor));
-    targetActor = await response.json();
+    try {
+      response = await fetch(this.target);
+      let targetPost = await response.json();
+      response = await fetch(webfinger(targetPost.actor));
+      targetActor = await response.json();
+    } catch (e) {
+      console.log("Could not find target or target actor");
+    }
   }
 
   article = vowelRegex.test(this.object.type) ? "an" : "a";
   excerpt = this.object.name || this.object.content || null;
-
+  verb = this.type;
   switch (true) {
     case this.type == "Create":
       verb = "Add";

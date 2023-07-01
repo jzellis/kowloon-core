@@ -4,6 +4,5 @@ export default async function handler(id) {
   if (object) object = object.object;
   if (!object && typeof object == "string" && object.length > 0)
     object = (await (await fetch(id)).json()).object;
-  // console.log(object);
   return object;
 }

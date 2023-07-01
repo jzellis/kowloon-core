@@ -24,11 +24,20 @@ for (let j = 0; j < verbs.length; j++) {
 }
 
 export default async function handler(message) {
-  let user = await User.findOne({ id: message.to });
-  let canSend = user.actor.blocked.items.indexOf(message.from) == -1;
-  if (canSend) {
-    if (InboxParser[message.activity.type])
-      message = await InboxParser[message.activity.type](message);
-    return await Inbox.create(message);
+  try {
+    let user = await User.findOne({ id: message.to });
+    if (user) {
+      let canSend = user.actor.blocked.items.indexOf(message.from) == -1;
+      if (canSend) {
+        if (InboxParser[message.activity.type])
+          message = await InboxParser[message.activity.type](message);
+        return await Inbox.create(message);
+      }
+    } else {
+      console.log("User not found!");
+    }
+  } catch (e) {
+    console.log("Inbox error: ", e);
+    return {};
   }
 }

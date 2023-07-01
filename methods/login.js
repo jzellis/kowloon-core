@@ -13,13 +13,11 @@ export default async function handler({ username, password }) {
         { new: true }
       );
       return {
-        token: user.accessToken,
-        user: {
-          username: user.username,
-          email: user.email,
-          actor: user.actor,
-          prefs: user.prefs,
-        },
+        username: user.username,
+        email: user.email,
+        actor: user.actor,
+        prefs: user.prefs,
+        accessToken: user.accessToken,
       };
     }
   } else {

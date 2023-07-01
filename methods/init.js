@@ -1,7 +1,8 @@
 import * as dotenv from "dotenv";
+import fs from "fs";
 import mongoose from "mongoose";
 import { createClient } from "redis";
-import { Activity, User, Settings } from "../schema/index.js";
+import { Activity, User, Settings, Inbox, Outbox } from "../schema/index.js";
 dotenv.config();
 
 export default async function handler() {
@@ -70,7 +71,7 @@ export default async function handler() {
 
     settings = await Settings.find();
   }
-  settings.forEach((setting) => {
+  settings.forEach(async (setting) => {
     this.settings[setting.name] = setting.value;
   });
 
@@ -83,11 +84,35 @@ export default async function handler() {
   this.redis = client;
 
   let allUsers = await User.find({}, "actor");
-
   await Promise.all(
     allUsers.map(async (u) => {
       await this.redis.set(this.hash(u.actor.id), JSON.stringify(u.actor));
       return true;
     })
+  );
+
+  // let importedArticles = JSON.parse(
+  //   await fs.readFileSync("../wp-to-kowloon.json")
+  // );
+
+  // await Activity.deleteMany({});
+  // await Inbox.deleteMany({});
+  // await Outbox.deleteMany({});
+  // let jzellis = await User.findOne({ username: "jzellis" });
+  // this.setUser(jzellis);
+  // await Promise.all(
+  //   importedArticles.map(async (activity) => {
+  //     activity.owner = jzellis._id;
+  //     if (!activity.object.name) activity.object.type = "Note";
+  //     await this.addToOutbox(activity);
+  //   })
+  // );
+
+  let outboxItems = await Outbox.find({});
+  await Promise.all(
+    outboxItems.map(
+      async (o) =>
+        await this.addToInbox({ from: o.from, to: o.to, activity: o.activity })
+    )
   );
 }

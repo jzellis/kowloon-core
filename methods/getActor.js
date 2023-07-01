@@ -8,6 +8,8 @@ export default async function handler(id) {
     try {
       actor = await (await fetch("http://" + this.webfinger(id))).json();
       await this.redis.set(this.hash(actor.id), JSON.stringify(actor));
-    } catch (e) {}
+    } catch (e) {
+      console.log(e);
+    }
   return actor;
 }

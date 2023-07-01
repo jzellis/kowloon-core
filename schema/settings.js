@@ -5,7 +5,13 @@ const SettingsSchema = new Schema(
     name: { type: String, required: true, unique: true },
     value: { type: Schema.Types.Mixed },
     description: String,
+    public: { type: Boolean, default: true },
+    ui: {
+      type: { type: String, default: "text" },
+      options: Object,
+    },
   },
+
   {
     timestamps: {
       createdAt: "created",
