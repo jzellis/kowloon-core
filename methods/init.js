@@ -83,7 +83,7 @@ export default async function handler() {
 
   this.redis = client;
 
-  let allUsers = await User.find({}, "actor");
+  let allUsers = await User.find({});
   await Promise.all(
     allUsers.map(async (u) => {
       await this.redis.set(this.hash(u.actor.id), JSON.stringify(u.actor));
@@ -108,11 +108,13 @@ export default async function handler() {
   //   })
   // );
 
-  let outboxItems = await Outbox.find({});
-  await Promise.all(
-    outboxItems.map(
-      async (o) =>
-        await this.addToInbox({ from: o.from, to: o.to, activity: o.activity })
-    )
-  );
+  // let outboxItems = await Outbox.find({});
+  // await Promise.all(
+  //   outboxItems.map(
+  //     async (o) =>
+  //       await this.addToInbox({ from: o.from, to: o.to, activity: o.activity })
+  //   )
+  // );
+
+  // await Activity.updateMany({}, { $set: { public: true } });
 }

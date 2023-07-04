@@ -9,7 +9,7 @@ export default async function handler({
 }) {
   types = types || ["Note", "Activity", "Image", "Link"];
   let q = { to, "activity.inReplyTo": { $exists: false } };
-  if (read) q.read = read;
+  // if (read == true) q.read = true;
   if (showMine == false) q["activity.actor"] = { $ne: to };
   if (actors && typeof actors === "array")
     q["activity.actor"] = { $in: actors };

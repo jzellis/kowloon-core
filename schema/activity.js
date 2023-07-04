@@ -129,13 +129,14 @@ ActivitySchema.pre("save", async function (next) {
     .value;
   let possAdj = defaultPronouns.possAdj;
 
-  if (this.target) {
+  if (this.target && this.target.indexOf("@") === 0) {
     try {
       response = await fetch(this.target);
       let targetPost = await response.json();
       response = await fetch(webfinger(targetPost.actor));
       targetActor = await response.json();
     } catch (e) {
+      console.log(this.target);
       console.log("Could not find target or target actor");
     }
   }

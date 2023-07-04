@@ -25,9 +25,10 @@
     "mongoose-jsonschema": "^0.3.0",
     "node-opml-parser": "^1.0.0",
     "redis": "^4.6.7",
-    "rss-parser": "^3.12.0",
+    "rss-parser": "^3.13.0",
     "sanitize-html": "^2.10.0",
-    "tensify": "^0.0.4"
+    "tensify": "^0.0.4",
+    "xml2js": "^0.6.0"
   },
   "devDependencies": {
     "cypress": "^12.13.0"

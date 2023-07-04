@@ -40,58 +40,59 @@ export default async function handler(activity) {
   }
   try {
     activity = await Activity.create(activity);
+
+    if (OutboxParser[activity.type]) {
+      await OutboxParser[activity.type](activity);
+    }
+
+    let recipients = activity.getRecipients();
+
+    let outboxItems = [];
+    if (recipients.length > 0) {
+      await Promise.all(
+        recipients.map(async (recipient) => {
+          if (activity.object)
+            activity.object = activity.object.id || activity.object;
+          activity.bto =
+            activity.cc =
+            activity.bcc =
+            activity.whoCanComment =
+            activity.owner =
+            activity._id =
+              undefined;
+          const outboxItem = {
+            from: activity.actor,
+            to: recipient,
+            activity: activity,
+          };
+
+          try {
+            let actor = await this.getActor(recipient);
+            try {
+              outboxItem.response = await (
+                await fetch(actor.inbox, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": `application/json`,
+                  },
+                  body: JSON.stringify(outboxItem),
+                })
+              ).json();
+              outboxItem.delivered = new Date().toISOString();
+            } catch (e) {
+              console.log("Fetching inbox URL ", actor.inbox, " failed");
+            }
+          } catch (e) {
+            console.error(e);
+            outboxItem.error = e;
+          }
+          if (activity.type != "Read") outboxItems.push(outboxItem);
+        })
+      );
+    }
+    await Outbox.create(outboxItems);
   } catch (e) {
     console.log(e);
   }
-  if (OutboxParser[activity.type]) {
-    activity = await OutboxParser[activity.type](activity);
-  }
-
-  let recipients = activity.getRecipients();
-
-  let outboxItems = [];
-  if (recipients.length > 0) {
-    await Promise.all(
-      recipients.map(async (recipient) => {
-        if (activity.object)
-          activity.object = activity.object.id || activity.object;
-        activity.bto =
-          activity.cc =
-          activity.bcc =
-          activity.whoCanComment =
-          activity.owner =
-          activity._id =
-            undefined;
-        const outboxItem = {
-          from: activity.actor,
-          to: recipient,
-          activity: activity,
-        };
-
-        try {
-          let actor = await this.getActor(recipient);
-          try {
-            outboxItem.response = await (
-              await fetch(actor.inbox, {
-                method: "POST",
-                headers: {
-                  "Content-Type": `application/json`,
-                },
-                body: JSON.stringify(outboxItem),
-              })
-            ).json();
-            outboxItem.delivered = new Date().toISOString();
-          } catch (e) {
-            console.log("Fetching inbox URL ", actor.inbox, " failed");
-          }
-        } catch (e) {
-          console.error(e);
-          outboxItem.error = e;
-        }
-        outboxItems.push(outboxItem);
-      })
-    );
-  }
-  await Outbox.create(outboxItems);
   return this.sanitize(activity);
 }

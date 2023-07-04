@@ -65,6 +65,8 @@ UserSchema.pre("save", async function (next) {
   this.actor.circles.id = `${domain}/@${this.username}/circles`;
   this.actor.inbox = `${domain}/@${this.username}/inbox`;
   this.actor.outbox = `${domain}/@${this.username}/outbox`;
+  this.actor.profile = `${domain}/@${this.username}`;
+
   this.actor.circles.map((c) => {
     c.id = this.actor.id + "/circles/" + c._id;
     return c;
