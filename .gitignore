@@ -130,4 +130,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-methods/populate.js
+/methods/populate.js
