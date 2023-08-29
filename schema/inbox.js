@@ -1,16 +1,24 @@
 import mongoose from "mongoose";
-const Schema = mongoose.Schema;
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import Settings from "./settings.js";
+const Schema = mongoose.Schema,
+  ObjectId = mongoose.Types.ObjectId,
+  SALT_WORK_FACTOR = 10;
+const KEY = process.env.JWT_KEY;
+
 const InboxSchema = new Schema(
   {
-    activity: { type: Object, required: true },
     from: { type: String, required: true },
     to: { type: String, required: true },
-    read: { type: Boolean, default: false },
+    server: { type: String },
+    queued: { type: Date, default: Date.now() },
+    activity: { type: String, required: true },
+    blocked: { type: Boolean, default: false },
+    completed: Date,
   },
   {
-    timestamps: {
-      createdAt: "received",
-    },
     collection: "inbox",
   }
 );

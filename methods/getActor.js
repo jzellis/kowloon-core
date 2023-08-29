@@ -1,15 +1,14 @@
-import { User } from "../schema/index.js";
+import Activity from "../schema/activity.js";
+import Actor from "../schema/actor.js";
+import Post from "../schema/post.js";
+
 export default async function handler(id) {
-  console.log(id);
-  let actor;
-  actor = JSON.parse(await this.redis.get(this.hash(id)));
-  if (!actor) actor = await User.findOne({ "actor.id": id }, "actor");
-  if (!actor)
-    try {
-      actor = await (await fetch("http://" + this.webfinger(id))).json();
-      await this.redis.set(this.hash(actor.id), JSON.stringify(actor));
-    } catch (e) {
-      console.log(e);
-    }
+  let actor = JSON.parse(await this.redis.get(`actors:${this.hash(id)}`));
+  if (!actor) {
+    let q = { id, deleted: { $exists: false } };
+    actor = await Activity.findOne(q).select(
+      "id preferredUsername name summary location url icon publicKey -_id"
+    );
+  }
   return actor;
 }

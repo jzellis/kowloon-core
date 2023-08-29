@@ -1,80 +1,72 @@
+import { generateKeyPairSync } from "crypto";
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import ObjectSchema from "./object.js";
-import CollectionSchema from "./collection.js";
+import { AsObjectSchema } from "./asobject.js";
 import Settings from "./settings.js";
+const Schema = mongoose.Schema;
+const ActorSchema = AsObjectSchema.clone();
 
-/**
- * @class Actor
- */
-
-const ActorSchema = ObjectSchema.clone();
 ActorSchema.add({
-  owner: String,
-  inbox: String,
-  outbox: String,
-  following: {
-    type: CollectionSchema,
-    default: {
-      type: "OrderedCollection",
-      items: [],
-    },
-  },
-  followers: {
-    type: CollectionSchema,
-    default: {
-      type: "OrderedCollection",
-      items: [],
-    },
-  },
-  liked: {
-    type: CollectionSchema,
-    default: {
-      type: "OrderedCollection",
-      items: [],
-    },
-  },
-  bookmarked: {
-    type: CollectionSchema,
-    default: {
-      type: "OrderedCollection",
-      items: [],
-    },
-  },
-  blocked: {
-    type: CollectionSchema,
-    default: {
-      type: "OrderedCollection",
-      items: [],
-    },
-  },
-  circles: [CollectionSchema],
-  preferredUsername: String,
-  type: { type: String, default: "Actor" },
-  pronouns: {
-    type: Object,
-  },
-  _kowloon: {
-    accessToken: String,
-    requestToken: String,
-    blocked: Boolean,
-  },
+  preferredUsername: { type: String, required: true, alias: "username" },
+  type: { type: String, default: "Person" },
+  summary: { type: String, alias: "bio" },
+  following: { type: [Object], default: [] },
+  followers: { type: [Object], default: [] },
+  liked: { type: [Object], default: [] },
+  bookmarked: { type: [Object], default: [] },
+  blocked: { type: [Object], default: [] },
+  circles: { type: [Object], default: [] },
+  lastTimelineUpdate: { type: Date, default: Date.now() },
+  publicKey: String,
+  privateKey: String,
+  url: { type: [String], alias: "links" },
+  user: { type: mongoose.Types.ObjectId, ref: "User" },
 });
 
-ActorSchema.set("toJSON", { virtuals: true });
-ActorSchema.set("toObject", { virtuals: true });
+ActorSchema.index({
+  preferredUsername: "text",
+  name: "text",
+  summary: "text",
+  url: "text",
+  "location.name": "text",
+});
 
 ActorSchema.pre("save", async function (next) {
-  let domain = await Settings.findOne({ name: "domain" });
-  this._kowloon.accessToken = jwt.sign(
-    {
-      id: this.id,
-      domain,
-    },
-    process.env.JWT_KEY
-  );
+  this.id =
+    this.id ||
+    `@${this.preferredUsername}${
+      (await Settings.findOne({ name: "asDomain" })).value
+    }`;
+  if (!this.publicKey) {
+    const { publicKey, privateKey } = generateKeyPairSync("rsa", {
+      modulusLength: 4096,
+      publicKeyEncoding: {
+        type: "pkcs1",
+        format: "pem",
+      },
+      privateKeyEncoding: {
+        type: "pkcs8",
+        format: "pem",
+      },
+    });
+    this.publicKey = publicKey;
+    this.privateKey = privateKey;
+    if (this.circles.length === 0)
+      this.circles = [
+        {
+          name: "Friends",
+          summary: "My friends",
+          items: [],
+        },
+      ];
+    if (!this.icon)
+      this.icon = `${
+        (await Settings.findOne({ name: "domain" })).value
+      }/icons/avatar.png`;
+  }
 
   next();
 });
 
-export default ActorSchema;
+const Actor = mongoose.model("Actor", ActorSchema);
+
+export default Actor;

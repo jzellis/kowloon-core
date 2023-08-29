@@ -1,34 +1,24 @@
-import { Activity } from "../schema/index.js";
-import util from "util";
+import Activity from "../schema/activity.js";
+import Actor from "../schema/actor.js";
+import Post from "../schema/post.js";
 
-export default async function handler(q, page) {
-  page = page || 1;
+export default async function handler(q = {}, page = 1) {
   let limit = 20;
-  if (!this.user) {
-    q.public = q.public || true;
-  } else {
-    q = {
-      $and: [
-        q,
-        {
-          $or: [
-            { public: true },
-            { actor: this.user.id },
-            { to: this.user.id },
-            { bto: this.user.id },
-            { cc: this.user.id },
-            { bcc: this.user.id },
-          ],
-        },
-      ],
-    };
-  }
-  q = { ...q, deleted: { $exists: false } };
-  console.log(
-    util.inspect(q, { showHidden: false, depth: null, colors: true })
+  let offset = (page - 1) * limit;
+  let activities = await Activity.find(q)
+    .limit(limit)
+    .skip(offset)
+    .sort({ published: -1 })
+    .select("-bto -bcc -_id -__v");
+
+  await Promise.all(
+    activities.map(async (activity) => {
+      if (typeof activity.object == "string")
+        activity.object =
+          (await Post.findOne({ id: activity.object }).select(
+            "-bto -bcc -_id -__v"
+          )) || (await this.get(activity.object));
+    })
   );
-  return await Activity.find(q, this.sanitizedFields)
-    .sort("-published")
-    .skip((page - 1) * 20)
-    .limit(limit);
+  return activities;
 }

@@ -1,55 +1,18 @@
-import { Activity } from "../schema/index.js";
-import util from "util";
-function isValidHttpUrl(string) {
-  let url;
+import Activity from "../schema/activity.js";
+import Post from "../schema/post.js";
 
-  try {
-    url = new URL(string);
-  } catch (_) {
-    return false;
-  }
-
-  return url.protocol === "http:" || url.protocol === "https:";
-}
 export default async function handler(id) {
-  let query = { $and: [] };
-  if (isValidHttpUrl(id)) {
-    query.$and.push({ id: id });
-  } else {
-    query.$and.push({ _id: id });
-  }
-
-  if (!this.user) {
-    query.$and.push({ public: true });
-  } else {
-    query.$and.push({
-      $or: [
-        { public: true },
-        { actor: this.user.id },
-        { to: this.user.id },
-        { bto: this.user.id },
-        { cc: this.user.id },
-        { bcc: this.user.id },
-      ],
-    });
-  }
-  // if (this.user)
-  //   query.$and[1] = {
-  //     $or: [
-  //       { public: true },
-  //       { actor: this.user.id },
-  //       { to: this.user.id },
-  //       { bto: this.user.id },
-  //       { cc: this.user.id },
-  //       { bcc: this.user.id },
-  //     ],
-  //   };
-
-  console.log(
-    util.inspect(query, { showHidden: false, depth: null, colors: true })
+  let activity = JSON.parse(
+    await this.redis.get(`activities:${this.hash(id)}`)
   );
-
-  let activity = await Activity.findOne(query);
-  // if (!activity) activity = await (await fetch(id)).json();
-  return this.sanitize(activity);
+  if (!activity) {
+    let q = { id, deleted: { $exists: false } };
+    activity = await Activity.findOne(q).select("-_id -__v");
+  }
+  if (typeof activity.object == "string")
+    activity.object =
+      (await Post.findOne({ id: activity.object }).select(
+        "-bto -bcc -_id -__v"
+      )) || (await this.get(activity.object));
+  return activity;
 }

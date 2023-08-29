@@ -14,12 +14,31 @@ const Kowloon = {
   sanitizedFields: "-owner -_id -__v -_kowloon -bto -bcc -password",
   testing: true,
   redis: null,
+  outboxQueue: null,
   connection: {},
+  activityVerbs: {
+    contentManagement: ["Create", "Delete", "Update"],
+    collectionManagement: ["Add", "Move", "Remove"],
+    reactions: [
+      "Accept",
+      "Dislike",
+      "Flag",
+      "Ignore",
+      "Like",
+      "Reject",
+      "TentativeAccept",
+      "TentativeReject",
+    ],
+    groupManagement: ["Join", "Leave"],
+    contentExperience: ["Listen", "Read", "View"],
+    relationshipExperience: ["Block", "Follow", "Ignore", "Invite", "Reject"],
+    negation: ["Undo"],
+  },
 };
 
-const verbs = await fs.readdirSync(methodDir);
-for (let j = 0; j < verbs.length; j++) {
-  let file = verbs[j];
+const methods = await fs.readdirSync(methodDir);
+for (let j = 0; j < methods.length; j++) {
+  let file = methods[j];
   if (!fs.lstatSync(methodDir + file).isDirectory()) {
     let name = file.split(".js")[0];
     let imported = await import(`${methodDir}${file}`);
@@ -32,5 +51,5 @@ for (let j = 0; j < verbs.length; j++) {
   }
 }
 await Kowloon.init();
-
+// console.log(Kowloon);
 export default Kowloon;
