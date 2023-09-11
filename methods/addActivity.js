@@ -1,6 +1,8 @@
 import Activity from "../schema/activity.js";
 import Actor from "../schema/actor.js";
 import Post from "../schema/post.js";
+import Outbox from "../schema/outbox.js";
+import Inbox from "../schema/inbox.js";
 
 export default async function handler(activity) {
   try {
@@ -25,6 +27,18 @@ export default async function handler(activity) {
             activity: activity.id,
           });
         })
+      );
+    } else {
+      await Inbox.findOneAndUpdate(
+        { activity: activity.object },
+        {
+          $set: {
+            $read:
+              activity.type === "Read" || activity.type === "View"
+                ? true
+                : false,
+          },
+        }
       );
     }
 

@@ -6,7 +6,7 @@ export default async function handler(q, page = 1) {
   let limit = 20;
   let offset = limit * (page - 1);
   return await Post.find(q)
-    .select.limit(limit)
+    .limit(limit)
     .skip(offset)
     .select("-bto -bcc -_id -__v");
 }

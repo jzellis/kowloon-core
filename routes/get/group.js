@@ -1,8 +1,10 @@
-import Kowloon from "../../kowloon/index.js";
+import Kowloon from "../../kowloon.js";
 
 export default async function handler(req, res, next) {
-  let response = {};
   let status = 200;
+  let response = {};
+
+  response = await Kowloon.getGroup(req.params.id);
 
   res.status(status).json(response);
 }

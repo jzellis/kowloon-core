@@ -32,6 +32,7 @@ const UserSchema = new Schema(
     active: { type: Boolean, default: true },
     blocked: { type: Boolean, default: false },
     lastLogin: Date,
+    lastAccessed: Date,
     accessToken: String,
     publicKey: String,
     privateKey: String,

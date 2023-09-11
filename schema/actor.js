@@ -7,7 +7,18 @@ const ActorSchema = AsObjectSchema.clone();
 
 ActorSchema.add({
   preferredUsername: { type: String, required: true, alias: "username" },
-  type: { type: String, default: "Person" },
+  type: {
+    type: String,
+    enum: [
+      "Application",
+      "Group",
+      "Organization",
+      "Person",
+      "Service",
+      "Server",
+    ],
+    default: "Person",
+  },
   summary: { type: String, alias: "bio" },
   following: { type: [Object], default: [] },
   followers: { type: [Object], default: [] },

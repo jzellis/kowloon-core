@@ -1,8 +1,19 @@
 import express from "express";
 import fs from "fs/promises";
-
+import Kowloon from "../kowloon.js";
 var router = express.Router();
 
+import indexGetRoute from "./get/index.js";
+import outboxGetRoute from "./get/outbox.js";
+import userProfileGetRoute from "./get/actor.js";
+import userOutboxGetRoute from "./get/userOutbox.js";
+import userInboxGetRoute from "./get/userInbox.js";
+import postGetRoute from "./get/post.js";
+import activityGetRoute from "./get/activity.js";
+
+//Post Routes
+import loginPostRoute from "./post/login.js";
+const staticPage = await fs.readFile("./index.html", "utf-8");
 // import rootGetRoute from "./get/home.js";
 // import inboxGetRoute from "./get/inbox.js";
 // import outboxGetRoute from "./get/outbox.js";
@@ -32,6 +43,20 @@ var router = express.Router();
 
 // const staticPage = await fs.readFile("./../client/dist/index.html", "utf-8");
 
+const routes = {
+  get: {
+    "/": indexGetRoute,
+    "/outbox": outboxGetRoute,
+    "/@:id": userProfileGetRoute,
+    "/@:id/outbox": userOutboxGetRoute,
+    "/@:id/inbox": userInboxGetRoute,
+    "/posts/:id": postGetRoute,
+    "/activities/:id": activityGetRoute,
+  },
+  post: {
+    "/login": loginPostRoute,
+  },
+};
 // const routes = {
 //   get: {
 //     "/": rootGetRoute,
@@ -71,36 +96,31 @@ router.use(async (req, res, next) => {
     "Access-Control-Allow-Headers",
     "Authorization, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
   );
-  res.header("Access-Control-Allow-Credentials", "true");
-  // let token = req.headers.authorization
-  //   ? req.headers.authorization.split("Bearer ")[1]
-  //   : undefined;
-  // let user = token ? await Kowloon.auth(token) : undefined;
-  // req.user = user || undefined;
+  let token = req.headers.authorization
+    ? req.headers.authorization.split("Bearer ")[1]
+    : undefined;
+  let user = token ? await Kowloon.auth(token) : undefined;
+  let actor = await Kowloon.getActor(user.actor);
+  req.user = user || undefined;
+  req.actor = actor;
+  if (
+    ["application/activity+json", "application/json"].includes(
+      req.headers.accept
+    )
+  ) {
+    for (const [url, route] of Object.entries(routes.get)) {
+      router.get(url, route);
+    }
 
-  res.send("OK");
-  // if ((req.headers.accept = "application/activity+json")) {
-  //   for (const [url, route] of Object.entries(routes.get)) {
-  //     router.get(url, route);
-  //   }
-  //   for (const [url, route] of Object.entries(routes.post)) {
-  //     router.post(url, route);
-  //     // router.post("/api/upload", upload.array("files"), apiUploadRoute);
-  //   }
-
-  //   } else {
-  //     res.send(staticPage);
-  //     next();
-  // }
-
+    for (const [url, route] of Object.entries(routes.post)) {
+      router.post(url, route);
+    }
+  } else {
+    res.setHeader("content-type", "text/html");
+    res.send(staticPage);
+    // next();
+  }
   next();
 });
-
-// for (const [url, route] of Object.entries(routes.get)) {
-//   router.get(url, route);
-// }
-// for (const [url, route] of Object.entries(routes.post)) {
-//   router.post(url, route);
-// }
 
 export default router;

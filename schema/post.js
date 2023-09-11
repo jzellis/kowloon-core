@@ -8,6 +8,11 @@ const PostSchema = AsObjectSchema.clone();
 
 PostSchema.add({
   actor: { type: String, required: true },
+  type: {
+    type: String,
+    // enum: ["Note", "Article", "Link", "Gallery", "Image", "Audio", "Video"],
+    default: "Note",
+  },
   name: { type: String, required: false, alias: "title" },
   attributedTo: { type: String },
   likes: { type: [Object], default: [] },
