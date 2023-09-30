@@ -4,7 +4,7 @@ export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
 
-  response = await Kowloon.getGroup(req.params.id);
+  response = await Kowloon.getGroupById(req.params.id);
 
   res.status(status).json(response);
 }

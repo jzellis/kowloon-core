@@ -8,14 +8,15 @@ const GroupSchema = AsObjectSchema.clone();
 
 GroupSchema.add({
   name: { type: String, required: true },
+  description: { type: String, default: "" },
   type: { type: String, default: "Group" },
   members: { type: [Object], default: [], alias: "items" },
   pending: { type: [Object], default: [] },
   creator: { type: String, required: true },
   admins: { type: [String], default: [] },
   moderators: { type: [String], default: [] },
-
   public: { type: Boolean, default: false },
+  hidden: { type: Boolean, default: false },
   blocked: { type: [String], default: [] },
 });
 

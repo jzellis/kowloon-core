@@ -44,7 +44,7 @@ ActorSchema.index({
 ActorSchema.pre("save", async function (next) {
   this.id =
     this.id ||
-    `@${this.preferredUsername}${
+    `@${this.preferredUsername}@${
       (await Settings.findOne({ name: "asDomain" })).value
     }`;
   if (!this.publicKey) {

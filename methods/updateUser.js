@@ -1,13 +1,12 @@
-import Activity from "../schema/activity.js";
-import Actor from "../schema/actor.js";
-import Post from "../schema/post.js";
+import User from "../schema/user.js";
 
 export default async function handler(user) {
   try {
-    return await User.findOneAndUpdate(
-      { _id: user._id },
-      { $set: { ...user, isAdmin: false } }
+    const updatedUser = await User.findOneAndUpdate(
+      { id: user.id },
+      { $set: user }
     );
+    return updatedUser;
   } catch (e) {
     return { error: e };
   }

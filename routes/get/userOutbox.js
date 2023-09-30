@@ -4,26 +4,8 @@ export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
   let page = req.query.page || 1;
-  // let query = {
-  //   actor: req.params.id,
-  //   public: true,
-  // };
-  let query = req.user
-    ? {
-        actor: req.params.id,
-        $or: [
-          { public: true },
-          { to: req.user.actor },
-          { cc: req.user.actor },
-          { bcc: req.user.actor },
-          { bto: req.user.actor },
-        ],
-      }
-    : {
-        actor: req.params.id,
-        public: true,
-      };
-  let posts = await Kowloon.queryPosts(query, page);
+  let actor = await Kowloon.getActorByUsername(req.params.id);
+  let posts = await Kowloon.getActorActivities(actor.id, page);
   response = {
     "@context": "https://www.w3.org/ns/activitystreams",
     summary: `${req.params.id} | Public Posts`,

@@ -3,6 +3,8 @@ import { AsObjectSchema } from "./asobject.js";
 import Group from "./group.js";
 import Settings from "./settings.js";
 import slugify from "slugify";
+import sanitizeHtml from "sanitize-html";
+import { marked } from "marked";
 const Schema = mongoose.Schema;
 const PostSchema = AsObjectSchema.clone();
 
@@ -39,13 +41,19 @@ PostSchema.index({
 PostSchema.pre("save", async function (next) {
   this.id =
     this.id ||
-    `${(await Settings.findOne({ name: "domain" })).value}/${
-      this.actor.split("@")[1]
-    }/posts/${this._id}`;
+    `${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
 
   // This needs to do sanitizing at some point but for now we'll just leave it
   this.content = this.content || this.source.content;
   this.source.mediaType = this.source.mediaType || "text/html";
+  if (this.source.mediaType.includes("html")) {
+    const allowedTags = sanitizeHtml.defaults.allowedTags.concat(["img"]);
+    this.content = `<p>${sanitizeHtml(this.source.content, {
+      allowedTags,
+    })}</p>`;
+  } else if (this.source.mediaType.includes("markdown")) {
+    this.content = `${marked(this.source.content)}`;
+  }
   this.attributedTo = this.attributedTo || this.actor;
   if (this.public === true && !this.audience)
     this.audience = {
@@ -64,6 +72,7 @@ PostSchema.pre("save", async function (next) {
       type: "Group",
     };
   }
+
   next();
 });
 

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
@@ -7,6 +7,7 @@ const Schema = mongoose.Schema,
   ObjectId = mongoose.Types.ObjectId,
   SALT_WORK_FACTOR = 10;
 const KEY = process.env.JWT_KEY;
+// import { ActorSchema } from "./actor.js";
 
 /**
  * @class User
@@ -27,7 +28,7 @@ const UserSchema = new Schema(
     password: { type: String, required: true },
     email: { type: String, required: true },
     prefs: Object,
-    actor: { type: String },
+    actor: { type: mongoose.Types.ObjectId, ref: "Actor" },
     isAdmin: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
     blocked: { type: Boolean, default: false },

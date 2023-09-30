@@ -1,0 +1,63 @@
+html, body{
+  @apply h-screen
+}
+
+.top-menu{
+  @apply navbar
+}
+
+
+.container{
+  @apply h-screen w-full grid grid-cols-4 gap-4
+}
+
+.sidebar{
+  @apply bg-gray-200 h-full p-4
+}
+
+.sidebar h1.title{
+  @apply text-2xl font-thin uppercase tracking-widest
+}
+
+.sidebar .profile{
+  @apply text-center mx-12 my-8
+}
+
+.sidebar .profile .avatar{
+  @apply rounded-xl w-full h-auto
+}
+
+.sidebar .profile .name{
+  @apply text-xl
+}
+.sidebar .profile .handle{
+  @apply font-thin
+}
+
+.main{
+  @apply col-span-2
+}
+.post-editor{
+  @apply rounded-b-2xl bg-gray-100 px-8 w-full transition-transform duration-1000
+}
+
+.post-editor, .post-settings{
+  @apply mb-8 py-8
+}
+
+.post-editor select{
+  @apply bg-white font-bold mx-1 pr-4
+}
+
+.post-editor textarea{
+  @apply w-full input-bordered
+}
+
+#postTitle{
+  overflow: hidden;
+  transition: all .5s ease-in-out;
+}
+
+.ql-editor{
+  @apply bg-white
+}

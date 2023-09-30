@@ -4,11 +4,9 @@ export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
   let page = req.query.page || 1;
-  let query = {
-    actor: req.params.id,
-    public: true,
-  };
-  let posts = await Kowloon.queryPosts(query, page);
+  console.log(req.params.id);
+  let actor = await Kowloon.getActorByUsername(req.params.id);
+  let posts = await Kowloon.getActorTimeline(actor.id, page);
   response = {
     "@context": "https://www.w3.org/ns/activitystreams",
     summary: `${req.params.id}'s Public Posts`,

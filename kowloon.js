@@ -5,7 +5,6 @@ import createServer from "./createServer.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const methodDir = __dirname + `/methods/`;
-
 const Kowloon = {
   settings: {},
   user: null,
@@ -36,22 +35,25 @@ const Kowloon = {
     negation: ["Undo"],
   },
 };
+try {
+  const methods = await fs.readdirSync(methodDir);
+  for (let j = 0; j < methods.length; j++) {
+    let file = methods[j];
 
-const methods = await fs.readdirSync(methodDir);
-for (let j = 0; j < methods.length; j++) {
-  let file = methods[j];
-  if (!fs.lstatSync(methodDir + file).isDirectory()) {
-    let name = file.split(".js")[0];
-    let imported = await import(`${methodDir}${file}`);
-    let importedMethod = imported.default;
-    Object.defineProperty(Kowloon, name, {
-      enumerable: true,
-      configurable: true,
-      value: importedMethod,
-    });
+    if (!fs.lstatSync(methodDir + file).isDirectory()) {
+      let name = file.split(".js")[0];
+      let imported = await import(`${methodDir}${file}`);
+      let importedMethod = imported.default;
+      Object.defineProperty(Kowloon, name, {
+        enumerable: true,
+        configurable: true,
+        value: importedMethod,
+      });
+    }
   }
+} catch (e) {
+  console.log(e);
 }
 await Kowloon.init();
 
-// console.log(Kowloon);
 export default Kowloon;

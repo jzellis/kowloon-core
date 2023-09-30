@@ -52,9 +52,9 @@ ActivitySchema.add({
 ActivitySchema.pre("save", async function (next) {
   this.id =
     this.id ||
-    `${(await Settings.findOne({ name: "domain" })).value}/${
-      this.actor.split("@")[1]
-    }/activities/${this._id}`;
+    `${(await Settings.findOne({ name: "domain" })).value}/activities/${
+      this._id
+    }`;
 
   if (this.object && this.object.to) this.to = this.object.to;
   if (this.object && this.object.cc) this.cc = this.object.cc;
