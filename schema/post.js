@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
+import Actor from "./actor.js";
 import Group from "./group.js";
 import Settings from "./settings.js";
 import slugify from "slugify";
@@ -7,16 +8,17 @@ import sanitizeHtml from "sanitize-html";
 import { marked } from "marked";
 const Schema = mongoose.Schema;
 const PostSchema = AsObjectSchema.clone();
+// import Kowloon from "../kowloon.js";
 
 PostSchema.add({
-  actor: { type: String, required: true },
+  actor: { type: Object, required: true },
   type: {
     type: String,
     // enum: ["Note", "Article", "Link", "Gallery", "Image", "Audio", "Video"],
     default: "Note",
   },
   name: { type: String, required: false, alias: "title" },
-  attributedTo: { type: String },
+  attributedTo: { type: Object },
   likes: { type: [Object], default: [] },
   replies: { type: [Object], default: [] },
   quotes: { type: [Object], default: [] },

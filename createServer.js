@@ -24,6 +24,7 @@ export default async function handler() {
   app.use(cookieParser());
   app.use(express.static("public"));
   app.use(routes);
+  app.use(nocache());
 
   // app.use(nocache());
   app.set("json spaces", 2);

@@ -3,17 +3,29 @@ import fs from "fs/promises";
 import Kowloon from "../kowloon.js";
 var router = express.Router();
 
-import indexGetRoute from "./get/index.js";
-import outboxGetRoute from "./get/outbox.js";
-import userProfileGetRoute from "./get/actor.js";
-import userOutboxGetRoute from "./get/userOutbox.js";
-import userInboxGetRoute from "./get/userInbox.js";
+import indexGetRoute from "./get/home.js";
+import indexInboxRoute from "./get/inbox.js";
+
+import indexOutboxRoute from "./get/outbox.js";
+// import outboxGetRoute from "./get/outbox.js";
+import userProfileGetRoute from "./get/users/index.js";
+import userOutboxGetRoute from "./get/users/outbox.js";
+import userInboxGetRoute from "./get/users/inbox.js";
+
 import postGetRoute from "./get/post.js";
 import activityGetRoute from "./get/activity.js";
-import groupGetRoute from "./get/group.js";
+import searchRoute from "./get/search.js";
+
+import groupProfileGetRoute from "./get/groups/index.js";
+import groupOutboxGetRoute from "./get/groups/outbox.js";
+import groupInboxGetRoute from "./get/groups/inbox.js";
+
+// import postGetRoute from "./get/post.js";
+// import activityGetRoute from "./get/activity.js";
+// import groupGetRoute from "./get/group.js";
 
 //Post Routes
-import loginPostRoute from "./post/login.js";
+// import loginPostRoute from "./post/login.js";
 const staticPage = await fs.readFile("./index.html", "utf-8");
 // import rootGetRoute from "./get/home.js";
 // import inboxGetRoute from "./get/inbox.js";
@@ -47,16 +59,26 @@ const staticPage = await fs.readFile("./index.html", "utf-8");
 const routes = {
   get: {
     "/": indexGetRoute,
-    "/outbox": outboxGetRoute,
+    "/outbox": indexOutboxRoute,
+
+    // "/outbox": outboxGetRoute,
     "/users/:id": userProfileGetRoute,
     "/users/:id/outbox": userOutboxGetRoute,
     "/users/:id/inbox": userInboxGetRoute,
+    "/groups/:id": groupProfileGetRoute,
+    "/groups/:id/outbox": groupOutboxGetRoute,
+    "/groups/:id/inbox": groupInboxGetRoute,
+    "/users/:userId/:id": postGetRoute,
     "/posts/:id": postGetRoute,
     "/activities/:id": activityGetRoute,
-    "/groups/:id": groupGetRoute,
+    "/search/:query": searchRoute,
+
+    // "/posts/:id": postGetRoute,
+    // "/activities/:id": activityGetRoute,
+    // "/groups/:id": groupGetRoute,
   },
   post: {
-    "/login": loginPostRoute,
+    // "/login": loginPostRoute,
   },
 };
 // const routes = {
@@ -101,11 +123,10 @@ router.use(async (req, res, next) => {
   let token = req.headers.authorization
     ? req.headers.authorization.split("Bearer ")[1]
     : undefined;
-  if (token) {
+  if (token && token.length > 0) {
     let user = token ? await Kowloon.auth(token) : undefined;
-    let actor = await Kowloon.getActorById(user.actor);
-    req.user = user || undefined;
-    req.actor = actor;
+    let actor = await Kowloon.getActorById(user.actor.id);
+    req.user = user || null;
   }
   if (
     ["application/activity+json", "application/json"].includes(

@@ -1,10 +1,26 @@
 import Kowloon from "../../kowloon.js";
 
 export default async function handler(req, res, next) {
+  if (req.user) Kowloon.setUser(req.user);
   let status = 200;
   let response = {};
+  let query = { _id: req.params.id, deleted: { $exists: false } };
+  if (Kowloon.user && Kowloon.user.actor) {
+    query.$or = [
+      { public: true },
+      { actor: Kowloon.user.actor.id },
+      { attributedTo: Kowloon.user.actor.id },
+      { to: Kowloon.user.actor.id },
+      { cc: Kowloon.user.actor.id },
+      { bto: Kowloon.user.actor.id },
+      { bcc: Kowloon.user.actor.id },
+    ];
+  } else {
+    query.public = true;
+  }
 
-  response = await Kowloon.getPost(req.params.id);
-
+  let post = await Kowloon.queryPosts(query);
+  console.log(post);
+  response = post && post != [] ? post : { error: "Post not found" };
   res.status(status).json(response);
 }
