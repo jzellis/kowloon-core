@@ -1,7 +1,6 @@
 const kowloon = {
   user: JSON.parse(localStorage.getItem("user")),
   headers: function () {
-    console.log(this.user);
     const headers = {
       "Content-Type": "application/json",
       Accept: "application/json",
@@ -66,6 +65,11 @@ const kowloon = {
     } catch (e) {
       return { error: e };
     }
+  },
+  getLinkPreview: async function (url) {
+    return await this.get(
+      `${import.meta.env.VITE_API_SERVER}/preview?url=${url}`
+    );
   },
   addPost: async function (post) {
     return await this.post(

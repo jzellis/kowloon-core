@@ -24,6 +24,7 @@ import groupInboxGetRoute from "./get/groups/inbox.js";
 
 import loginRoute from "./api/login.js";
 import uploadRoute from "./api/upload.js";
+import previewRoute from "./api/preview.js";
 // import postGetRoute from "./get/post.js";
 // import activityGetRoute from "./get/activity.js";
 // import groupGetRoute from "./get/group.js";
@@ -76,6 +77,7 @@ const routes = {
     "/posts/:id": postGetRoute,
     "/activities/:id": activityGetRoute,
     "/search/:query": searchRoute,
+    "/preview": previewRoute,
 
     // "/posts/:id": postGetRoute,
     // "/activities/:id": activityGetRoute,
@@ -114,11 +116,14 @@ router.use(async (req, res, next) => {
   ) {
     for (const [url, route] of Object.entries(routes.get)) {
       router.get(url, route);
+      // next();
     }
 
     for (const [url, route] of Object.entries(routes.post)) {
       router.post(url, route);
+      // next();
     }
+    next();
   } else {
     if (req.path.split("/")[1] === "public") {
       res.setHeader("content-type", mime.getType(process.cwd() + req.path));
@@ -128,8 +133,6 @@ router.use(async (req, res, next) => {
       res.send(staticPage);
     }
   }
-
-  // next();
 });
 
 export default router;
