@@ -45,5 +45,5 @@
 }
 
 .rdw-editor-main {
-  @apply bg-white px-4 rounded-lg;
+  @apply bg-white px-4 pb-8 rounded-lg;
 }
