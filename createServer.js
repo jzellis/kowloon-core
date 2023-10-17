@@ -20,7 +20,13 @@ export default async function handler() {
   app.use(logger("dev"));
   // app.use(bodyParser({ limit: "100mb" }));
   app.use(express.json({ limit: "100mb" }));
-  app.use(express.urlencoded({ extended: true }));
+
+  app.use(
+    express.urlencoded({
+      extended: true,
+      limit: 10000000,
+    })
+  );
   app.use(cookieParser());
   app.use(express.static("public"));
   app.use(routes);

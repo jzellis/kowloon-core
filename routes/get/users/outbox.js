@@ -20,7 +20,6 @@ export default async function handler(req, res, next) {
   )
     query = { ...query, public: true };
 
-  console.log(query);
   let page = req.query.page || 1;
 
   let posts = await Kowloon.queryPosts(query, page);

@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+#navbar {
+  @apply navbar bg-base-100 shadow-lg;
+}
+
+.main:not(.loggedIn) {
+  @apply w-1/2 mx-auto;
+}
+.main.loggedIn {
+  @apply w-1/2;
+}
+
+.post {
+  @apply w-full rounded-lg bg-gray-50 p-4 mb-8 shadow-lg border border-gray-100;
+}
+
+.post-actor-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.post .actor-name {
+  @apply font-bold;
+}
+
+.post .actor-username {
+  @apply text-sm;
+}
+
+.post-content {
+  @apply mt-2 ml-[40px];
+}
+
+.post-meta {
+  @apply text-sm;
+}
+
+.post-editor {
+  @apply bg-slate-100 rounded-lg mb-4 p-4 shadow-lg;
+}
+
+.rdw-editor-main {
+  @apply bg-white px-4 rounded-lg;
+}

@@ -1,9 +1,8 @@
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
-import Actor from "./actor.js";
 import Group from "./group.js";
 import Settings from "./settings.js";
-import slugify from "slugify";
+
 import sanitizeHtml from "sanitize-html";
 import { marked } from "marked";
 const Schema = mongoose.Schema;
@@ -50,9 +49,9 @@ PostSchema.pre("save", async function (next) {
   this.source.mediaType = this.source.mediaType || "text/html";
   if (this.source.mediaType.includes("html")) {
     const allowedTags = sanitizeHtml.defaults.allowedTags.concat(["img"]);
-    this.content = `<p>${sanitizeHtml(this.source.content, {
+    this.content = `${sanitizeHtml(this.source.content, {
       allowedTags,
-    })}</p>`;
+    })}`;
   } else if (this.source.mediaType.includes("markdown")) {
     this.content = `${marked(this.source.content)}`;
   }

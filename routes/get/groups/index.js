@@ -9,7 +9,6 @@ export default async function handler(req, res, next) {
     Kowloon.user && Kowloon.user.actor && Kowloon.user.actor.id
       ? { ...query, members: Kowloon.user.actor.id }
       : { ...query, public: true, hidden: false };
-  console.log(query);
   let group = await Kowloon.queryGroups(query);
   response = {
     "@context": "https://www.w3.org/ns/activitystreams",

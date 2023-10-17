@@ -20,7 +20,6 @@ export default async function handler(req, res, next) {
   }
 
   let post = await Kowloon.queryPosts(query);
-  console.log(post);
   response = post && post != [] ? post : { error: "Post not found" };
   res.status(status).json(response);
 }

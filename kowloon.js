@@ -51,9 +51,7 @@ try {
       });
     }
   }
-} catch (e) {
-  console.log(e);
-}
+} catch (e) {}
 await Kowloon.init();
 
 export default Kowloon;

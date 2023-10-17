@@ -99,16 +99,9 @@ UserSchema.pre("update", async function (next) {
 
 /** Compares a plaintext password to the user's hashed password and returns true if it's correct and false otherwise. */
 UserSchema.methods.verifyPassword = async function (plaintext) {
+  console.log("verifying password");
   return await bcrypt.compare(plaintext, this.password);
 };
-
-// UserSchema.methods.addFriendToCircle = function (circleId, actor) {
-//   // console.log(this.actor.circles.filter((c) => c._id == circleId)[0]);
-//   this.actor.circles.filter((c) => c._id == circleId)[0].items.indexOf(actor) ==
-//     -1 &&
-//     this.actor.circles.filter((c) => c._id == circleId)[0].items.push(actor);
-//   this.save();
-// };
 
 const User = mongoose.model("User", UserSchema);
 

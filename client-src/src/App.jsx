@@ -1,47 +1,44 @@
-/* eslint-disable no-unused-vars */
-import { useState } from 'react'
-import './App.css'
-import Sidebar from './components/Sidebar'
-import PostEditor from './components/PostEditor'
+import { useState, useEffect } from 'react'
+import store from "../store"
+import { useDispatch, useSelector } from 'react-redux'
+import { setSettings, setUser } from '../store/ui'
+import Kowloon from './lib/Kowloon'
+import Navbar from './components/Navbar'
+import Sidebar from "./components/Sidebar"
+import PostEditor from "./components/PostEditor"
+import { Outlet } from 'react-router-dom'
+
 function App() {
-  const [count, setCount] = useState(0)
+
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.ui.user)
+  const postEditorOpen = useSelector(state => state.ui.postEditorOpen)
+  
+
+  const getSettings = async () => { 
+    let siteSettings = await Kowloon.getSettings();
+    dispatch(setSettings(siteSettings));
+  }
+  useEffect(() => { 
+    getSettings();
+    if(localStorage.getItem("user")) dispatch(setUser(JSON.parse(localStorage.getItem("user"))))
+
+  }, [])
 
   return (
+
     <>
-       {/* <div className="navbar bg-base-100">
-  <div className="flex-1">
-    <a className="btn btn-ghost normal-case text-xl font-thin">Kowloon</a>
-  </div>
-  <div className="flex-none">
-    <ul className="menu menu-horizontal px-1">
-      <li><a>Timeline</a></li>
-      <li><a>Groups</a></li>
-      <li><input className='border-black border' placeholder='Search' /></li>
+       <Navbar />
+       <div className='flex gap-2'>
 
-            <li>
-        <details>
-          <summary>
-            Parent
-          </summary>
-          <ul className="p-2 bg-base-100">
-            <li><a>Link 1</a></li>
-            <li><a>Link 2</a></li>
-          </ul>
-        </details>
-      </li>
-    </ul>
-  </div>
-</div> */}
+        {user && <Sidebar />}
+        <div className='main'>
+          {postEditorOpen && <PostEditor />}
+          <Outlet />
+          </div>
+    </div>
+      </>
 
-      <div className="container">
-      <Sidebar />
-        <main className='main'>
-          <PostEditor />
-          
-          <section className='timeline'>Timeline</section>
-          </main>
-      </div>
-    </>
   )
 }
 

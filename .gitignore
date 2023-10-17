@@ -7,6 +7,7 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 ./*.json
+./client-src-bak
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -131,3 +132,6 @@ dist
 .pnp.*
 
 /methods/populate.js
+
+# React Component Preview
+previewConfig.json
