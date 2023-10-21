@@ -20,7 +20,6 @@ export default async function handler(req, res, next) {
   let page = req.query.page || 1;
 
   let posts = await Kowloon.queryPosts(query, page);
-  console.log(posts);
   // if (typeof posts !== "array") posts = [posts];
   response = {
     "@context": "https://www.w3.org/ns/activitystreams",

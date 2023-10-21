@@ -45,16 +45,18 @@ PostSchema.pre("save", async function (next) {
     `${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
 
   // This needs to do sanitizing at some point but for now we'll just leave it
-  this.content = this.content || this.source.content;
+  // this.content = this.content ? this.content : this.source.content;
   this.source.mediaType = this.source.mediaType || "text/html";
   if (this.source.mediaType.includes("html")) {
     const allowedTags = sanitizeHtml.defaults.allowedTags.concat(["img"]);
-    this.content = `${sanitizeHtml(this.source.content, {
-      allowedTags,
-    })}`;
+    // this.content = `${sanitizeHtml(this.source.content, {
+    //   allowedTags,
+    // })}`;
+    this.content = this.source.content;
   } else if (this.source.mediaType.includes("markdown")) {
     this.content = `${marked(this.source.content)}`;
   }
+
   this.attributedTo = this.attributedTo || this.actor;
   if (this.public === true && !this.audience)
     this.audience = {

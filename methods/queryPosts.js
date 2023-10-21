@@ -2,6 +2,7 @@ import Post from "../schema/post.js";
 
 export default async function handler(criteria = {}, page = 1) {
   let posts = await Post.find(criteria)
+    .sort({ published: -1 })
     .limit(page * 20)
     .skip((page - 1) * 20);
   await Promise.all(

@@ -10,6 +10,7 @@ import Activity from "../schema/activity.js";
 import User from "../schema/user.js";
 import Post from "../schema/post.js";
 import Group from "../schema/group.js";
+import Feed from "../schema/feed.js";
 import crypto from "crypto";
 dotenv.config();
 
@@ -194,6 +195,7 @@ export default async function handler() {
     console.log(`Actors: ${await Actor.countDocuments()}`);
     console.log(`Activities: ${await Activity.countDocuments()}`);
     console.log(`Groups: ${await Group.countDocuments()}`);
+    console.log(`Feeds: ${await Feed.countDocuments()}`);
 
     // this.redis = createClient();
     // this.redis.on("error", (err) => console.log("Redis Client Error", err));
@@ -261,6 +263,11 @@ export default async function handler() {
     //   this.processInbox();
     //   done();
     // });
+
+    let feeds = await Feed.find();
+    await Promise.all(
+      feeds.map(async (f) => (await this.getFeedItems(f.id)).id)
+    );
   } catch (e) {
     console.log(e);
   }

@@ -1,12 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import Kowloon from "../../lib/Kowloon";
 import Post from "../Post";
-
+import { setPosts } from "../../../store/posts"
 /* eslint-disable no-unused-vars */
 const Timeline = (props) => {
 
-    const [posts, setPosts] = useState([]);
+    const posts = useSelector(state => state.posts.items);
+    const dispatch = useDispatch();
 
     const fetchData = async () => {
         const headers = {
@@ -16,13 +18,11 @@ const Timeline = (props) => {
 
         let data = await Kowloon.getPublicTimeline();
         console.log(data)
-        setPosts(data.items);
+        dispatch(setPosts(data.items))
 
      }
 
     useEffect(() => { 
-
-
 
     fetchData();
 

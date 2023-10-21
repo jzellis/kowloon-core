@@ -6,10 +6,12 @@ import { Editor } from 'react-draft-wysiwyg';
 import { EditorState, ContentState, convertToRaw } from 'draft-js';
 import {stateToHTML} from 'draft-js-export-html';
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
-import store from "../../../store";
+import { useDispatch } from "react-redux";
+import { setPosts } from "../../../store/posts";
 import Kowloon from "../../lib/Kowloon";
 import {GoFileMedia} from 'react-icons/go';
 import { set } from "lodash";
+
 const PostEditor = (props) => {
     const user = useSelector(state => state.ui.user);
     const actor = user.actor
@@ -24,6 +26,7 @@ const PostEditor = (props) => {
     const [uploads, setUploads] = useState([]);
     const [gettingLinkPreview, setGettingLinkPreview] = useState(false);
     const maxLength = 20;
+    const dispatch = useDispatch();
 
 
     const onEditorStateChange = (editorState) => {
@@ -109,7 +112,15 @@ const PostEditor = (props) => {
            attachments: attachments.length > 0 ? attachments : null,
             public: isPublic
        }
-        console.log(await Kowloon.addPost(post));
+        await Kowloon.addPost(post);
+        setEditorState(EditorState.createEmpty());
+        setContentLength(0);
+        setTitle("");
+        setLink("");
+        setFeaturedImage("");
+        setUploads([]);
+        let data = await Kowloon.getPublicTimeline();
+        dispatch(setPosts(data.items))
 
     }
 
@@ -134,6 +145,7 @@ const PostEditor = (props) => {
         <Editor
             toolbarHidden={postType != "Article"}
             editorState={editorState}
+            editorClassName={postType.toLowerCase()}
             onEditorStateChange={onEditorStateChange}
         />
         <div className={`${postType != "Note" ? "hidden" : ""} text-right text-sm text-gray-500`}>{contentLength}/{maxLength}</div>
