@@ -7,6 +7,7 @@ import { EditorState, ContentState, convertToRaw } from 'draft-js';
 import {stateToHTML} from 'draft-js-export-html';
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import { useDispatch } from "react-redux";
+import { togglePostEditor } from "../../../store/ui";
 import { setPosts } from "../../../store/posts";
 import Kowloon from "../../lib/Kowloon";
 import {GoFileMedia} from 'react-icons/go';
@@ -25,12 +26,17 @@ const PostEditor = (props) => {
     const [isPublic, setPublic] = useState(true);
     const [uploads, setUploads] = useState([]);
     const [gettingLinkPreview, setGettingLinkPreview] = useState(false);
-    const maxLength = 20;
+    const [lengthWarning, setLengthWarning] = useState(false);
+    const [isPosting, setIsPosting] = useState(false);
+    const maxLength = 500;
     const dispatch = useDispatch();
 
 
     const onEditorStateChange = (editorState) => {
+        setLengthWarning((postType == "Note" && editorState.getCurrentContent().getPlainText("").length >= maxLength - 20))
+        if(postType != "Note" || (postType == "Note" && editorState.getCurrentContent().getPlainText("").length < maxLength))
         setEditorState(editorState);
+
         setContent(stateToHTML(editorState.getCurrentContent()));
         setContentLength(editorState.getCurrentContent().getPlainText("").length)
     };
@@ -86,7 +92,9 @@ const PostEditor = (props) => {
 
     }
 
-    const addPost = async () => { 
+    const addPost = async (e) => {
+        e.preventDefault();
+        setIsPosting(true);
         let attachments = [];
         if (uploads.length > 0) { 
 
@@ -109,7 +117,7 @@ const PostEditor = (props) => {
                 mediaType: "text/html"
            },
             featuredImage: featuredImage.length > 0 ? featuredImage : undefined,
-           attachments: attachments.length > 0 ? attachments : null,
+           attachment: attachments.length > 0 ? attachments : null,
             public: isPublic
        }
         await Kowloon.addPost(post);
@@ -121,6 +129,8 @@ const PostEditor = (props) => {
         setUploads([]);
         let data = await Kowloon.getPublicTimeline();
         dispatch(setPosts(data.items))
+        dispatch(togglePostEditor())
+        setIsPosting(false);
 
     }
 
@@ -148,7 +158,9 @@ const PostEditor = (props) => {
             editorClassName={postType.toLowerCase()}
             onEditorStateChange={onEditorStateChange}
         />
-        <div className={`${postType != "Note" ? "hidden" : ""} text-right text-sm text-gray-500`}>{contentLength}/{maxLength}</div>
+        <div className={`${postType != "Note" ? "hidden" : ""} text-right text-sm 
+        ${lengthWarning && contentLength < maxLength ? "text-yellow-500" : "text-gray-500"} ${contentLength == maxLength && "text-red-500 font-bold"}
+        `}>{contentLength}/{maxLength}</div>
         {featuredImage && <div className="mt-8 w-full h-auto text-center items-center" onClick={() => setFeaturedImage("")}><div className="relative w-auto h-auto text-center"><img className="rounded-lg border border-gray-200 h-48 w-auto mx-auto" src={featuredImage} /><div className="absolute bg-white bg-opacity-50 align-middle top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full text-center opacity-0 hover:opacity-100 flex items-center"><div className="w-full text-center">Remove</div></div></div></div>}
         {(uploads.length > 0 && !featuredImage) &&
             <div className="mt-8 w-full h-auto grid grid-cols-4 gap-2 items-center">
@@ -173,7 +185,7 @@ const PostEditor = (props) => {
                     return <option key={c.id} value={c.name}>{c.name}</option>
                 })}</select></div>
                 }
-        <div className="mt-4 w-full text-right"><span className="btn btn-primary hover:btn-success" onClick={addPost}>Add {postType}</span></div>
+        <div className="mt-4 w-full text-right"><button disabled={isPosting} className="btn btn-primary hover:btn-success" onClick={addPost}>{`${isPosting ? "Posting..." : "Add Post"}`}</button></div>
         
     </div>)
 }

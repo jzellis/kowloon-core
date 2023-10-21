@@ -6,28 +6,31 @@ import Kowloon from './lib/Kowloon'
 import Navbar from './components/Navbar'
 import Sidebar from "./components/Sidebar"
 import PostEditor from "./components/PostEditor"
+import ImageModal from './components/ImageModal'
 import { Outlet } from 'react-router-dom'
 
 function App() {
 
   const dispatch = useDispatch();
   const user = useSelector(state => state.ui.user)
-  const postEditorOpen = useSelector(state => state.ui.postEditorOpen)
+  const postEditorOpen = useSelector(state => state.ui.postEditorOpen);
+  const imageModalOpen = useSelector(state => state.ui.imageModalOpen);
   
 
-  const getSettings = async () => { 
+  const getSettings = async () => {
     let siteSettings = await Kowloon.getSettings();
     dispatch(setSettings(siteSettings));
   }
-  useEffect(() => { 
+  useEffect(() => {
     getSettings();
-    if(localStorage.getItem("user")) dispatch(setUser(JSON.parse(localStorage.getItem("user"))))
+    if (localStorage.getItem("user")) dispatch(setUser(JSON.parse(localStorage.getItem("user"))))
 
   }, [])
 
   return (
 
-    <>
+    <div className={imageModalOpen && `h-screen w-screen overflow-hidden`} >
+      {imageModalOpen && <ImageModal />}
        <Navbar />
        <div className='flex gap-2'>
 
@@ -37,7 +40,7 @@ function App() {
           <Outlet />
           </div>
     </div>
-      </>
+      </div>
 
   )
 }

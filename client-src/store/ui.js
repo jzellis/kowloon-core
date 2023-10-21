@@ -9,6 +9,8 @@ export const uiSlice = createSlice({
     loggedIn: false,
     user: {},
     postEditorOpen: false,
+    imageModalOpen: false,
+    imageModalUrl: "",
   },
   reducers: {
     setSettings(state, action) {
@@ -35,11 +37,25 @@ export const uiSlice = createSlice({
       state.user = null;
       localStorage.removeItem("user");
     },
+    showImageModal: (state, action) => {
+      state.imageModalOpen = true;
+      state.imageModalUrl = action.payload;
+    },
+    hideImageModal: (state) => {
+      state.imageModalOpen = false;
+    },
   },
 });
 
 // Action creators are generated for each case reducer function
-export const { login, setSettings, setUser, logout, togglePostEditor } =
-  uiSlice.actions;
+export const {
+  login,
+  setSettings,
+  setUser,
+  logout,
+  togglePostEditor,
+  showImageModal,
+  hideImageModal,
+} = uiSlice.actions;
 
 export default uiSlice.reducer;

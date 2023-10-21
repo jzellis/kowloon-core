@@ -87,3 +87,15 @@
 .post-content figure img {
   @apply m-auto;
 }
+
+#imageModal .bg {
+  @apply absolute top-0 bottom-0 left-0 right-0 bg-black opacity-80 z-50;
+}
+
+#imageModal .wrapper {
+  @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50;
+}
+
+#imageModal .wrapper img {
+  @apply max-w-screen-lg max-h-screen p-8;
+}

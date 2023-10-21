@@ -3,13 +3,16 @@
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useEffect, useRef, useLayoutEffect } from 'react'
+import { useDispatch } from 'react-redux';
+import { showImageModal, hideImageModal } from '../../../store/ui';
 import { BsLink45Deg } from 'react-icons/bs'
 
 dayjs.extend(relativeTime)
 const Post = (props) => {
     const post = props.post;
     const { id, type, title, actor, likes, replies, quotes, content, published, href } = post;
-    const postRef = useRef()
+    const postRef = useRef();
+    const dispatch = useDispatch();
     
     useLayoutEffect(() => {
         
@@ -21,7 +24,11 @@ const Post = (props) => {
             })
         }
 
-    },[])
+    }, [])
+    
+    const showAttachment = (url) => {
+        dispatch(showImageModal(url))
+    }
     return (
         <div className="post">
             <div className="post-header">
@@ -39,7 +46,9 @@ const Post = (props) => {
 
             </div>
             {(post.featuredImage  && type != "Link") && <div className="post-featured-image"><img className='w-full' src={post.featuredImage} /></div>}
-            {(post.featuredImage  && type == "Link") && <div className="post-featured-image"><a href={href} className='font-bold' target='_blank'><img className='w-full' src={post.featuredImage} /></a></div>}
+            {(post.featuredImage && type == "Link") && <div className="post-featured-image"><a href={href} className='font-bold' target='_blank'><img className='w-full' src={post.featuredImage} /></a></div>}
+            {post.attachment && <ul className="post-attachments my-4 w-full flex gap-2">
+                {post.attachment.map((a) => <li className='rounded-lg cursor-pointer w-1/4 aspect-square overflow-hidden hover:border-2 border-blue-500' onClick={e => showAttachment(a.href)}><img className='min-w-full min-h-full' key={`attachment-${a}`} src={a.href} /></li>)}</ul>}
             <div ref={postRef} className="post-content" dangerouslySetInnerHTML={{ __html: content }} />
 
 
