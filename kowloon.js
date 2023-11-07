@@ -1,4 +1,5 @@
 import _createUser from "./methods/internal/_createUser.js";
+import _deleteUser from "./methods/internal/_deleteUser.js";
 import _updateUser from "./methods/internal/_updateUser.js";
 import _getActivities from "./methods/internal/_getActivities.js";
 import _getActivity from "./methods/internal/_getActivity.js";
@@ -20,10 +21,13 @@ import createGroup from "./methods/create/createGroup.js";
 import createPost from "./methods/create/createPost.js";
 import createReply from "./methods/create/createReply.js";
 import getActivity from "./methods/get/getActivity.js";
+import getActivities from "./methods/get/getActivities.js";
 import getActor from "./methods/get/getActor.js";
+import getActors from "./methods/get/getActors.js";
 import getActorPosts from "./methods/get/getActorPosts.js";
 import getActorTimeline from "./methods/get/getActorTimeline.js";
 import getCircle from "./methods/get/getCircle.js";
+import getCirclePosts from "./methods/get/getCirclePosts.js";
 import getGroup from "./methods/get/getGroup.js";
 import getGroupPosts from "./methods/get/getGroupPosts.js";
 import getPost from "./methods/get/getPost.js";
@@ -31,10 +35,12 @@ import getPublicTimeline from "./methods/get/getPublicTimeline.js";
 import init from "./methods/other/init.js";
 import likePost from "./methods/other/likePost.js";
 import login from "./methods/other/login.js";
-import sanitize from "./methods/other/sanitize.js";
+import sanitize from "./methods/internal/sanitize.js";
 import setUser from "./methods/other/setUser.js";
 import unlikePost from "./methods/other/unlikePost.js";
 import joinGroup from "./methods/other/joinGroup.js";
+import addActorToCircle from "./methods/other/addActorToCircle.js";
+import removeUserFromCircle from "./methods/other/removeUserFromCircle.js";
 // const serverMethodDir = __dirname + `/methods/server/`;
 const methodDir = `./methods/`;
 const Kowloon = {
@@ -43,7 +49,18 @@ const Kowloon = {
   actor: null,
   target: null,
   subject: null,
-  sanitizedFields: "-privateKey -_id -__v -bto -bcc -password",
+  sanitizedFields: [
+    "bto",
+    "bcc",
+    "password",
+    "privateKey",
+    "lastTimelineUpdate",
+    "circles",
+    "blocked",
+    "_id",
+    "__v",
+    "user",
+  ],
   testing: true,
   redis: null,
   outboxQueue: null,
@@ -68,6 +85,7 @@ const Kowloon = {
     negation: ["Undo"],
   },
   _createUser,
+  _deleteUser,
   _updateUser,
   _getActivities,
   _getActivity,
@@ -89,10 +107,13 @@ const Kowloon = {
   createPost,
   createReply,
   getActivity,
+  getActivities,
   getActor,
+  getActors,
   getActorPosts,
   getActorTimeline,
   getCircle,
+  getCirclePosts,
   getGroup,
   getGroupPosts,
   getPost,
@@ -104,8 +125,9 @@ const Kowloon = {
   setUser,
   unlikePost,
   joinGroup,
+  addActorToCircle,
+  removeUserFromCircle,
 };
-
 await Kowloon.init();
 
 export default Kowloon;
