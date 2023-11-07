@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Kowloon from "../../lib/Kowloon";
 import { useDispatch } from 'react-redux';
-import { login } from '../../../store/ui';
+import { login } from '../../store/ui';
 
 const LoginForm = () => { 
     const [username, setUsername] = useState("");
@@ -24,12 +24,15 @@ const LoginForm = () => {
     return (<>
         <form className="login-form text-center">
             <fieldset>
-                <input className="input" name="username" onChange={(e) => setUsername(e.target.value)} value={username} />
+                <label className="label" htmlFor="username">Username</label>
+                <input className="input input-bordered" name="username" onChange={(e) => setUsername(e.target.value)} value={username} />
             </fieldset>
             <fieldset>
+            <label className="label" htmlFor="password">Password</label>
+
                 <input className="input input-bordered" type="text" onChange={(e) => setPassword(e.target.value)} value={password} />
                 </fieldset>
-            <button onClick={doLogin}>Login</button>
+            <button className="btn btn-primary mt-4" onClick={doLogin}>Login</button>
         </form>
     </>)
 

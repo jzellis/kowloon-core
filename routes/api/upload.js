@@ -53,7 +53,6 @@ export default async function handler(req, res, next) {
 
       await Promise.all(
         uploads.map(async (file) => {
-          console.log(file);
           let uploadPath = file.filepath;
           let target = `${fullDir}/${req.user._id}-${file.newFilename}-${file.originalFilename}`;
           await fs.rename(uploadPath, target);
@@ -63,7 +62,6 @@ export default async function handler(req, res, next) {
           });
         })
       );
-
       response = returnedFiles;
     } catch (e) {
       status = 500;

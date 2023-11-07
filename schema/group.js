@@ -1,9 +1,7 @@
 import { generateKeyPairSync } from "crypto";
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
-import Settings from "./settings.js";
-import slugify from "slugify";
-const Schema = mongoose.Schema;
+import { Settings } from "./index.js";
 const GroupSchema = AsObjectSchema.clone();
 
 GroupSchema.add({

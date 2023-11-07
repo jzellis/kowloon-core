@@ -11,11 +11,16 @@ export default async function handler(req, res, next) {
     Kowloon.user.actor.id &&
     Kowloon.user.actor.id == actor.id
   ) {
-    response = await Kowloon.createPost({
-      ...req.body,
-      actor: Kowloon.user.actor.id,
-      attributedTo: Kowloon.user.actor.id,
-    });
+    if (req.body.post)
+      response.post = await Kowloon.createPost({
+        ...req.body.post,
+        actor: Kowloon.user.actor.id,
+        attributedTo: Kowloon.user.actor.id,
+      });
+  }
+
+  if (req.body.activity) {
+    response.activity = await Kowloon.createActivity(req.body.activity);
   }
 
   res.status(status).json(response);

@@ -5,7 +5,7 @@ export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
 
-  let activity = await Kowloon.getActivityById(req.params.id);
+  let activity = await Kowloon.getActivity(req.params.id);
   response = activity;
 
   res.status(status).json(response);

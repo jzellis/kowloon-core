@@ -6,10 +6,7 @@ export default async function handler(req, res, next) {
   let response = {};
 
   let actor = await Kowloon.getActorByUsername(req.params.id);
-  response = {
-    "@context": "https://www.w3.org/ns/activitystreams",
-
-    ...actor._doc,
-  };
+  actor.privateKey = undefined;
+  response = actor;
   res.status(status).json(response);
 }

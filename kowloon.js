@@ -1,10 +1,42 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import createServer from "./createServer.js";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const methodDir = __dirname + `/methods/`;
+import _createUser from "./methods/internal/_createUser.js";
+import _updateUser from "./methods/internal/_updateUser.js";
+import _getActivities from "./methods/internal/_getActivities.js";
+import _getActivity from "./methods/internal/_getActivity.js";
+import _getActor from "./methods/internal/_getActor.js";
+import _getActors from "./methods/internal/_getActors.js";
+import _getCircle from "./methods/internal/_getCircle.js";
+import _getCircles from "./methods/internal/_getCircles.js";
+import _getGroup from "./methods/internal/_getGroup.js";
+import _getPost from "./methods/internal/_getPost.js";
+import _getPosts from "./methods/internal/_getPosts.js";
+import _getSettings from "./methods/internal/_getSettings.js";
+import _getUser from "./methods/internal/_getUser.js";
+import _getUsers from "./methods/internal/_getUsers.js";
+import auth from "./methods/other/auth.js";
+import createActivity from "./methods/create/createActivity.js";
+import createActor from "./methods/create/createActor.js";
+import createCircle from "./methods/create/createCircle.js";
+import createGroup from "./methods/create/createGroup.js";
+import createPost from "./methods/create/createPost.js";
+import createReply from "./methods/create/createReply.js";
+import getActivity from "./methods/get/getActivity.js";
+import getActor from "./methods/get/getActor.js";
+import getActorPosts from "./methods/get/getActorPosts.js";
+import getActorTimeline from "./methods/get/getActorTimeline.js";
+import getCircle from "./methods/get/getCircle.js";
+import getGroup from "./methods/get/getGroup.js";
+import getGroupPosts from "./methods/get/getGroupPosts.js";
+import getPost from "./methods/get/getPost.js";
+import getPublicTimeline from "./methods/get/getPublicTimeline.js";
+import init from "./methods/other/init.js";
+import likePost from "./methods/other/likePost.js";
+import login from "./methods/other/login.js";
+import sanitize from "./methods/other/sanitize.js";
+import setUser from "./methods/other/setUser.js";
+import unlikePost from "./methods/other/unlikePost.js";
+import joinGroup from "./methods/other/joinGroup.js";
+// const serverMethodDir = __dirname + `/methods/server/`;
+const methodDir = `./methods/`;
 const Kowloon = {
   settings: {},
   user: null,
@@ -16,6 +48,7 @@ const Kowloon = {
   redis: null,
   outboxQueue: null,
   connection: {},
+  postTypes: ["Note", "Article", "Media", "Link"],
   activityVerbs: {
     contentManagement: ["Create", "Delete", "Update"],
     collectionManagement: ["Add", "Move", "Remove"],
@@ -34,24 +67,45 @@ const Kowloon = {
     relationshipExperience: ["Block", "Follow", "Ignore", "Invite", "Reject"],
     negation: ["Undo"],
   },
+  _createUser,
+  _updateUser,
+  _getActivities,
+  _getActivity,
+  _getActor,
+  _getActors,
+  _getCircle,
+  _getCircles,
+  _getGroup,
+  _getPost,
+  _getPosts,
+  _getSettings,
+  _getUser,
+  _getUsers,
+  auth,
+  createActivity,
+  createActor,
+  createCircle,
+  createGroup,
+  createPost,
+  createReply,
+  getActivity,
+  getActor,
+  getActorPosts,
+  getActorTimeline,
+  getCircle,
+  getGroup,
+  getGroupPosts,
+  getPost,
+  getPublicTimeline,
+  init,
+  likePost,
+  login,
+  sanitize,
+  setUser,
+  unlikePost,
+  joinGroup,
 };
-try {
-  const methods = await fs.readdirSync(methodDir);
-  for (let j = 0; j < methods.length; j++) {
-    let file = methods[j];
 
-    if (!fs.lstatSync(methodDir + file).isDirectory()) {
-      let name = file.split(".js")[0];
-      let imported = await import(`${methodDir}${file}`);
-      let importedMethod = imported.default;
-      Object.defineProperty(Kowloon, name, {
-        enumerable: true,
-        configurable: true,
-        value: importedMethod,
-      });
-    }
-  }
-} catch (e) {}
 await Kowloon.init();
 
 export default Kowloon;

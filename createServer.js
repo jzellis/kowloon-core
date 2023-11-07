@@ -108,6 +108,4 @@ export default async function handler() {
     debug("Listening on " + bind);
     console.log("Server is running....");
   }
-
-  // export default app;
 }

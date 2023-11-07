@@ -1,3 +1,6 @@
 import createServer from "./createServer.js";
-import Kowloon from "./kowloon.js";
-await createServer();
+try {
+  await createServer();
+} catch (e) {
+  console.log(e);
+}

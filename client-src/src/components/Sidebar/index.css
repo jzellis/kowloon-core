@@ -1,0 +1,15 @@
+#sidebar {
+  @apply absolute top-20 z-50 bg-gray-100 w-auto lg:w-1/4 mr-4 shadow-xl h-screen p-4 rounded-r-lg;
+}
+
+#sidebar h1 {
+  @apply font-bold text-xl mb-4;
+}
+
+#sidebar .location {
+  @apply text-sm font-bold mb-2;
+}
+
+#sidebar .description {
+  @apply text-sm;
+}

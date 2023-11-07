@@ -1,22 +1,28 @@
 window.global ||= window;
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { Editor } from 'react-draft-wysiwyg';
 import { EditorState, ContentState, convertToRaw } from 'draft-js';
 import {stateToHTML} from 'draft-js-export-html';
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import { useDispatch } from "react-redux";
-import { togglePostEditor } from "../../../store/ui";
-import { setPosts } from "../../../store/posts";
+import { togglePostEditor } from "../../store/ui";
+import { setPosts } from "../../store/posts";
 import Kowloon from "../../lib/Kowloon";
-import {GoFileMedia} from 'react-icons/go';
-import { set } from "lodash";
+import { GoFileMedia } from 'react-icons/go';
+import { GrDocumentText } from 'react-icons/gr'
+import { LuStickyNote } from 'react-icons/lu'
+import {FaLink, FaLock, FaLockOpen} from 'react-icons/fa'
+import { Transition } from "@headlessui/react"
+import "./index.css";
 
 const PostEditor = (props) => {
+    const postEditorOpen = useSelector(state => state.ui.postEditorOpen);
     const user = useSelector(state => state.ui.user);
+    const newPostType = useSelector(state => state.ui.newPostType);
     const actor = user.actor
-    const [postType, setPostType] = useState("Note");
+    const [postType, setPostType] = useState(newPostType || "Note");
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
     const [title, setTitle] = useState("");
     const [link, setLink] = useState("");
@@ -24,12 +30,15 @@ const PostEditor = (props) => {
     const [content, setContent] = useState("");
     const [contentLength, setContentLength] = useState(0);
     const [isPublic, setPublic] = useState(true);
+    const [circles, setCircles] = useState([]);
     const [uploads, setUploads] = useState([]);
     const [gettingLinkPreview, setGettingLinkPreview] = useState(false);
     const [lengthWarning, setLengthWarning] = useState(false);
     const [isPosting, setIsPosting] = useState(false);
+    const [modalPostEditor, setModalPostEditor] = useState(false);
     const maxLength = 500;
     const dispatch = useDispatch();
+    const EditorRef = useRef(null);
 
 
     const onEditorStateChange = (editorState) => {
@@ -41,18 +50,7 @@ const PostEditor = (props) => {
         setContentLength(editorState.getCurrentContent().getPlainText("").length)
     };
 
-    const changePostType = (e) => { 
-        console.log(postType, e.target.value)
-        if (postType != "Note" && e.target.value == "Note") {
-            if (confirm("Are you sure you want to change the post type? You will lose any content you have entered.")) {
-                setPostType(e.target.value);
-                setTitle("");
-                setLink("");
-            }
-        } else {
-            setPostType(e.target.value);
-        }
-    }
+
 
     const getLinkPreview = async () => { 
 
@@ -73,13 +71,19 @@ const PostEditor = (props) => {
 
     }
 
+    const changePostType = (type) =>{
+        setPostType(type);
+        setModalPostEditor(type == "Article" ? true : false)
+        return true;
+    }
+
     const handleUploads = (e) => { 
 
         setFeaturedImage("")
-        setUploads(Array.from(e.target.files))
+        setUploads([...uploads, ...Array.from(e.target.files).slice(0,8)])
         let images = Array.from(uploads).filter(f => f.type.startsWith("image/"));
         // let images = e.target.files.filter(f => f.type.startsWith("image/"));
-        if(uploads.length == 1) setFeaturedImage(URL.createObjectURL(images[0]));
+        if(uploads && uploads.length == 1) setFeaturedImage(URL.createObjectURL(images[0]));
     }
 
     
@@ -90,6 +94,25 @@ const PostEditor = (props) => {
         setUploads(newUploads);
         // if(newUploads.length === 1) setFeaturedImage(URL.createObjectURL(newUploads[0]));
 
+    }
+
+    const setAudience = (e) => {
+        if (e.target.value === "public") {
+            setPublic(true);
+            setCircles([])
+        } else {
+            setPublic(false);
+            setCircles(Array.from(new Set([...circles, e.target.value])));
+        }
+    }
+
+    const resetEditor = () => {
+        setEditorState(EditorState.createEmpty());
+        setContentLength(0);
+        setTitle("");
+        setLink("");
+        setFeaturedImage("");
+        setUploads([]);
     }
 
     const addPost = async (e) => {
@@ -121,12 +144,7 @@ const PostEditor = (props) => {
             public: isPublic
        }
         await Kowloon.addPost(post);
-        setEditorState(EditorState.createEmpty());
-        setContentLength(0);
-        setTitle("");
-        setLink("");
-        setFeaturedImage("");
-        setUploads([]);
+        resetEditor();
         let data = await Kowloon.getPublicTimeline();
         dispatch(setPosts(data.items))
         dispatch(togglePostEditor())
@@ -134,60 +152,129 @@ const PostEditor = (props) => {
 
     }
 
+    useEffect(() => EditorRef?.current.focus(), [EditorRef, postType]);
+    return (
+        <>
+            <div className={`post-editor-container mt-2 type-${postType.toLowerCase()}`}>
+                <div className="post-editor-bg w-full h-full">
+                <div className="post-type-buttons">
 
-    return (<div className="post-editor">
-        <div className="flex mb-4">
-            <div className="flex-1">Create New</div>
-            <div className="flex-none">
-            <select className="select" defaultValue={postType} onChange={changePostType}>
-                <option value="Note">Note</option>
-                <option value="Article">Article</option>
-                <option value="Media">Media</option>
-                <option value="Link">Link</option>
-                </select>
+                <div className="join">
+                <div className="tooltip tooltip-bottom" data-tip="Note">
+                <button className={`${postType && postType == "Note" ? "active" : "inactive"}`} onClick={() => changePostType("Note")} value="Note"><LuStickyNote className="h-[1.5em] w-auto" /></button>
                 </div>
-        </div>
-        {postType != "Note" && <div className="w-full mb-4"><input className="input w-full" placeholder="Post Title" defaultValue={title} onChange={e => setTitle(e.target.value)} /></div>}
-        {postType == "Link" && <><div className="w-full mb-4"><input className="input w-full" placeholder="Link URL" onChange={e => setLink(e.target.value)} onBlur={getLinkPreview} /></div>
-        </>}
+                <div className="tooltip tooltip-bottom" data-tip="Article">
+                    <button className={`${postType && postType == "Article" ? "active" : "inactive"}`} onClick={() => changePostType("Article")} value="Article"><GrDocumentText className="h-[1.5em] w-auto" /></button>
+                </div>
+                <div className="tooltip tooltip-bottom" data-tip="Media">
+
+                    <button className={`${postType && postType == "Media" ? "active" : "inactive"}`} onClick={() => changePostType("Media")} value="Media"><GoFileMedia className="h-[1.5em] w-auto" /></button>
+                </div>
+                <div className="tooltip tooltip-bottom" data-tip="Link">
+
+                    <button className={`${postType && postType == "Link" ? "active" : "inactive"}`} onClick={() => changePostType("Link")} value="Link"><FaLink className="h-[1.5em] w-auto" /></button>
+                    </div>
+                    </div>
+                    </div>
+            <div className={`post-editor`}>
+            <span className="text-sm font-bold uppercase mb-2">New {postType}</span>
+            <div className="overflow-hidden">
+            <Transition
+        show={postType != "Note"}
+        enter="transition-all transform ease-out duration-100"
+        enterFrom="-translate-y-full opacity-0"
+        enterTo="translate-y-0 opacity-100"
+        leave="transition transform ease duration-50"
+        leaveFrom="translate-y-0"
+        leaveTo="-translate-y-full"
+      >
+               <div className="w-full mb-4"><input className="input w-full" placeholder="Post Title (optional)" defaultValue={title} onChange={e => setTitle(e.target.value)} /></div>
+                </Transition>
+            </div>
+            <div className="overflow-hidden">
+            <Transition
+        show={postType == "Link"}
+        enter="transition-all transform ease-out duration-100"
+        enterFrom="-translate-y-full opacity-0"
+        enterTo="translate-y-0 opacity-100"
+        leave="transition transform ease duration-50"
+        leaveFrom="translate-y-0"
+        leaveTo="-translate-y-full"
+      >
+        <div className="w-full mb-4"><input className="input w-full" placeholder="Link URL" onChange={e => setLink(e.target.value)} onBlur={getLinkPreview} /></div>
+                
+                </Transition>
+                </div>
+           
         {postType == "Link" && gettingLinkPreview && <div className="w-full mb-4 text-sm italic text-center"><span className="loading loading-xs"></span>Getting Link Preview...</div>}
 
-        <Editor
+                        <Editor
+                           editorRef={(ref) => (EditorRef.current = ref)}
             toolbarHidden={postType != "Article"}
             editorState={editorState}
-            editorClassName={postType.toLowerCase()}
+            editorClassName={postType && "type-" + postType.toLowerCase()}
             onEditorStateChange={onEditorStateChange}
         />
-        <div className={`${postType != "Note" ? "hidden" : ""} text-right text-sm 
+        <div className={`${postType != "Note" ? "hidden" : ""} text-right text-xs md:text-sm 
         ${lengthWarning && contentLength < maxLength ? "text-yellow-500" : "text-gray-500"} ${contentLength == maxLength && "text-red-500 font-bold"}
         `}>{contentLength}/{maxLength}</div>
-        {featuredImage && <div className="mt-8 w-full h-auto text-center items-center" onClick={() => setFeaturedImage("")}><div className="relative w-auto h-auto text-center"><img className="rounded-lg border border-gray-200 h-48 w-auto mx-auto" src={featuredImage} /><div className="absolute bg-white bg-opacity-50 align-middle top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full text-center opacity-0 hover:opacity-100 flex items-center"><div className="w-full text-center">Remove</div></div></div></div>}
+
+                    {featuredImage && <div className="mt-8 w-full h-auto text-center items-center" onClick={() => setFeaturedImage("")}><div className="relative w-auto h-auto text-center"><img className="rounded-lg border border-gray-200 h-48 w-auto mx-auto" src={featuredImage} /><div className="absolute bg-white bg-opacity-50 align-middle top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full text-center opacity-0 hover:opacity-100 flex items-center"><div className="w-full text-center">Remove</div></div></div></div>}
+
         {(uploads.length > 0 && !featuredImage) &&
-            <div className="mt-8 w-full h-auto grid grid-cols-4 gap-2 items-center">
-                {uploads.map((f, i) => { return (<div key={`uploads-${i}`} className="aspect-square  bg-slate-300 rounded-lg items-center cursor-pointer" onClick={() => removeUpload(i)}><div className="relative h-full w-full"><img className="p-4 mx-auto my-auto align-middle h-full" key={`uploads-${i}`} src={URL.createObjectURL(f)} /><div className="absolute bg-white bg-opacity-50 align-middle top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full text-center opacity-0 hover:opacity-100 flex items-center"><div className="w-full text-center">Remove</div></div></div></div>) })}
-                </div>}
-        <div className="w-full"><input className="hidden" type='file' id="uploads" multiple accept={postType == "Note" ? ".jpg,.jpeg,.gif,.png,.mp3,.mp4,.mpg,.mp4" : "*"} onChange={handleUploads} /> <span className="btn btn-ghost btn-sm" onClick={() => {
-            document.getElementById("uploads").click();
-        }}><GoFileMedia /> {postType == "Media" ? "Upload Media" : "Upload Images"}</span></div>
+            <div className="upload-items">
+                    {uploads.map((f, i) => {
+                        console.log(f); return (
+                            <>
+                                <div className="indicator w-full h-full cursor-pointer"><span className="indicator-item badge indicator-top indicator-end" onClick={() => removeUpload(i)}>x</span>
 
-        <div className="w-full flex">
-            <div className="flex-1">This {postType} is</div>
-            <div className="flex-none flex">
-                <label className="label flex-1"><input className="radio mr-1" type="radio" name="isPublic" onClick={() => setPublic(true)} defaultChecked={isPublic} /> Public</label>
-                    <label className="label flex-none"><input className="radio mr-1" type="radio" name="isPublic" onClick={() => setPublic(false)} defaultChecked={!isPublic} /> Private</label>
+                                <div key={`uploads-${i}`} className="card w-full aspect-square" >
 
-
-            </div>
-
-
-        </div>
-        {isPublic === false && <div className="w-full text-right">Circles: <select className="select">{user.actor.circles && user.actor.circles.map(c => {
-                    return <option key={c.id} value={c.name}>{c.name}</option>
-                })}</select></div>
+                                <figure>{f.type.includes("image") && <img className="w-full h-auto overflow-clip" key={`uploads-${i}`} src={URL.createObjectURL(f)} />}
+                            {f.type.includes("audio") && <><audio><source src={URL.createObjectURL(f)} type={f.type} /></audio></>}
+                            {f.type.includes("video") && <><video className="rounded-lg mx-auto my-auto align-middle h-full"><source src={URL.createObjectURL(f)} type={f.type} /></video></>}
+                                        </figure>
+                                        <div className="card-body p-0 text-xs text-gray-400 truncate w-full">
+                                            {f.name}
+                                            </div>
+                                    </div>
+                                    </div>
+                            </>
+                        )
+                    })}
+                            </div >
                 }
-        <div className="mt-4 w-full text-right"><button disabled={isPosting} className="btn btn-primary hover:btn-success" onClick={addPost}>{`${isPosting ? "Posting..." : "Add Post"}`}</button></div>
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                <div className="w-full">
+                        {postType != "Link" &&
+                        <>
+                        <input className="hidden" type='file' id="uploads" multiple accept={postType == "Note" ? ".jpg,.jpeg,.gif,.png,.mp3,.mp4,.mpg,.mp4" : "*"} onChange={handleUploads} max={postType == "Media" ? 8 : 1} />
+                            <button title="Upload Media" className="btn btn-outline" onClick={() => {
+    document.getElementById("uploads").click();
+}}><GoFileMedia /><span className="!text-xs lg:!text-sm">Upload Media</span></button>
+</>
+                        }
+                        </div>
+                        <div className="w-full text-right">
+                            <div className="join">
+                                <div className="h-full rounded-none p-4">{isPublic && <FaLockOpen className="text-gray-500" />}{!isPublic && <FaLock />}</div>
+                                <select name="audience" className="select" defaultValue="public" onChange={setAudience}>
+                                <option value="public">Public</option>
+                                {user && user.actor && user.actor.circles.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                            </select>
+
+                            </div>
+                            </div>
+                        </div>
+
+                
+                        <div className="mt-4 w-full text-right"><button disabled={isPosting} className="btn btn-ghost hover:btn-primary" onClick={addPost}>{`${isPosting ? "Posting..." : "Add " + postType}`}</button><button onClick={() => {dispatch(togglePostEditor()); resetEditor();}} className="btn btn-ghost ml-2">Cancel</button></div>
         
-    </div>)
+            </div>
+                </div>
+                </div>
+            </>
+    )
 }
 
 export default PostEditor;

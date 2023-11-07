@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
-import Settings from "./settings.js";
+import { Settings, Group } from "./index.js";
 import tensify from "tensify";
+import Kowloon from "../kowloon.js";
 const vowelRegex = /^[aieouAIEOU].*/;
 const Schema = mongoose.Schema;
 const ActivitySchema = AsObjectSchema.clone();
@@ -28,6 +29,7 @@ ActivitySchema.add({
       "Join",
       "Leave",
       "Like",
+      "Unlike",
       "Listen",
       "Move",
       "Offer",
@@ -47,6 +49,12 @@ ActivitySchema.add({
   },
   public: { type: Boolean, default: false },
   object: { type: Object, alias: "post" },
+  objectType: { type: String, default: "Post" },
+  to: { type: [String], default: [] },
+  cc: { type: [String], default: [] },
+  bto: { type: [String], default: [] },
+  bcc: { type: [String], default: [] },
+  audience: { type: [String], default: [] },
 });
 
 ActivitySchema.pre("save", async function (next) {
@@ -55,7 +63,7 @@ ActivitySchema.pre("save", async function (next) {
     `${(await Settings.findOne({ name: "domain" })).value}/activities/${
       this._id
     }`;
-
+  // if (!this.actor) this.actor = "@" + (await Settings.findOne({ name: "domain" })).value;
   if (this.object && this.object.to) this.to = this.object.to;
   if (this.object && this.object.cc) this.cc = this.object.cc;
   if (this.object && this.object.bto) this.bto = this.object.bto;
@@ -65,7 +73,21 @@ ActivitySchema.pre("save", async function (next) {
 
   // If this object and this object has an id, replace the object with the id, so this is a reference to it rather than the entire object
   if (this.object && this.object.id) this.object = this.object.id;
+  if (this.public === true && !this.audience)
+    this.audience = {
+      "@context": "https://www.w3.org/ns/activitystreams",
+      id: "https://www.w3.org/ns/activitystreams#Public",
+      type: "Collection",
+    };
 
+  if (this.partOf) {
+    this.public = (await Group.findOne({ id: this.partOf })).public;
+    this.audience = {
+      "@context": "https://www.w3.org/ns/activitystreams",
+      id: this.partOf,
+      type: "Group",
+    };
+  }
   next();
 });
 

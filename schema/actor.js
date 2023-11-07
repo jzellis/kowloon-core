@@ -1,7 +1,8 @@
 import { generateKeyPairSync } from "crypto";
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
-import Settings from "./settings.js";
+import { Circle, Settings } from "./index.js";
+
 const Schema = mongoose.Schema;
 const ActorSchema = AsObjectSchema.clone();
 
@@ -16,6 +17,7 @@ ActorSchema.add({
       "Person",
       "Service",
       "Server",
+      "Feed",
     ],
     default: "Person",
   },
@@ -25,12 +27,18 @@ ActorSchema.add({
   liked: { type: [Object], default: [] },
   bookmarked: { type: [Object], default: [] },
   blocked: { type: [Object], default: [] },
-  circles: { type: [Object], default: [] },
+  circles: { type: [Schema.Types.ObjectId], default: [], ref: "Circle" },
   lastTimelineUpdate: { type: Date, default: Date.now() },
   publicKey: String,
   privateKey: String,
   url: { type: [String], alias: "links" },
   user: { type: mongoose.Types.ObjectId, ref: "User" },
+  prefs: {
+    type: Object,
+    default: {
+      defaultPostType: "Note",
+    },
+  },
 });
 
 ActorSchema.index({
@@ -59,22 +67,26 @@ ActorSchema.pre("save", async function (next) {
         format: "pem",
       },
     });
+
     this.publicKey = publicKey;
     this.privateKey = privateKey;
     if (this.circles.length === 0)
       this.circles = [
-        {
-          name: "Friends",
-          summary: "My friends",
-          items: [],
-        },
+        (
+          await Circle.create({
+            creator: this._id,
+            name: "Admin Friends",
+            description: "Circle for friends of Admin",
+            members: [],
+            public: false,
+          })
+        )._id,
       ];
     if (!this.icon)
       this.icon = `${
         (await Settings.findOne({ name: "domain" })).value
       }/icons/avatar.png`;
   }
-
   next();
 });
 

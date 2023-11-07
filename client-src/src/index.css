@@ -3,89 +3,17 @@
 @tailwind utilities;
 
 #navbar {
-  @apply navbar bg-base-100 shadow-lg;
+  @apply navbar;
 }
 
-.main:not(.loggedIn) {
-  @apply w-1/2 mx-auto;
+body {
+  @apply w-screen h-screen overflow-hidden;
 }
-.main.loggedIn {
-  @apply w-1/2;
+.main {
+  @apply mx-auto;
 }
-
-.post {
-  @apply w-full rounded-lg bg-gray-50 p-4 mb-8 shadow-lg border border-gray-100;
-}
-
-.post-title {
-  @apply max-w-[50rem] text-lg;
-}
-
-.post-actor-avatar {
-  @apply w-[32px] h-[32px] m-4 rounded-md;
-}
-
-.post-actor-avatar img {
-  @apply w-full h-auto;
-}
-
-.post .actor-name {
-  @apply font-bold;
-}
-
-.post .actor-username {
-  @apply text-sm;
-}
-
-.post-meta {
-  @apply text-sm;
-}
-
-.post-editor {
-  @apply bg-slate-100 rounded-lg mb-4 p-4 shadow-lg;
-}
-
-.rdw-editor-main {
-  @apply bg-white px-4 pb-8 rounded-lg min-h-[10rem];
-}
-
-.rdw-editor-main.article {
-  @apply min-h-[20rem];
-}
-
-.post-featured-image {
-  @apply mt-2 ml-[40px];
-}
-
-.post-featured-image img {
-  @apply max-h-[400px] w-auto max-w-full m-auto;
-}
-
-.post-content {
-  @apply mt-2 ml-[40px] text-[0.9rem] leading-7;
-}
-.post-content p {
-  @apply mb-4;
-}
-
-.post-content a {
-  @apply text-blue-600 hover:underline hover:decoration-dotted underline-offset-4;
-}
-
-.post-content ul {
-  @apply list-disc list-inside;
-}
-
-.post-content img {
-  @apply max-h-48 w-auto max-w-fit;
-}
-
-.post-content figure {
-  @apply text-center;
-}
-
-.post-content figure img {
-  @apply m-auto;
+.timeline {
+  @apply max-h-screen overflow-y-scroll pb-80;
 }
 
 #imageModal .bg {

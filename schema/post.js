@@ -1,12 +1,10 @@
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
-import Group from "./group.js";
-import Settings from "./settings.js";
-
+import { Group, Settings } from "./index.js";
 import sanitizeHtml from "sanitize-html";
 import { marked } from "marked";
-const Schema = mongoose.Schema;
 const PostSchema = AsObjectSchema.clone();
+const ReplySchema = AsObjectSchema.clone();
 // import Kowloon from "../kowloon.js";
 
 PostSchema.add({
@@ -17,9 +15,10 @@ PostSchema.add({
     default: "Note",
   },
   name: { type: String, required: false, alias: "title" },
+  quotedPost: { type: Object },
   attributedTo: { type: Object },
   likes: { type: [Object], default: [] },
-  replies: { type: [Object], default: [] },
+  replies: { type: [ReplySchema], default: [] },
   quotes: { type: [Object], default: [] },
   to: { type: [String], default: [] },
   bto: { type: [String], default: [] },
@@ -31,6 +30,10 @@ PostSchema.add({
   },
   published: Date,
   public: { type: Boolean, default: false },
+  flagged: { type: Boolean, default: false },
+  publicCanReply: { type: Boolean, default: false },
+  characterCount: { type: Number, default: 0 },
+  wordCount: { type: Number, default: 0 },
 });
 
 PostSchema.index({

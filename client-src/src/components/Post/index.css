@@ -1,0 +1,82 @@
+.post {
+  @apply w-auto mx-2 p-4 mb-8 relative  shadow-lg;
+}
+
+.post-title {
+  @apply max-w-[50rem] text-lg;
+}
+
+.post-actor-avatar {
+  @apply w-[32px] h-[32px] m-4 rounded-md;
+}
+
+.post-actor-avatar img {
+  @apply w-full h-auto;
+}
+
+.post .actor-name {
+  @apply font-bold;
+}
+
+.post .actor-username {
+  @apply text-sm;
+}
+
+.post-meta {
+  @apply text-sm;
+}
+
+.post-featured-image {
+  @apply mt-2 ml-[40px];
+}
+
+.post-featured-image img {
+  @apply max-h-[400px] w-auto max-w-full m-auto;
+}
+
+.post-content {
+  @apply mt-2 text-[1rem];
+}
+
+.post.note .post-content {
+  @apply text-[1em];
+}
+
+.post.article .post-content {
+  @apply text-[0.9em];
+}
+.post-content p {
+  @apply font-light mb-5 leading-5;
+}
+
+.post-content a {
+  @apply text-blue-600 hover:underline hover:decoration-dotted underline-offset-4;
+}
+
+.post-content ul {
+  @apply list-disc list-inside;
+}
+
+.post-content img {
+  @apply max-h-48 w-auto max-w-fit;
+}
+
+.post-content figure {
+  @apply text-center;
+}
+
+.post-content figure img {
+  @apply m-auto;
+}
+
+.post .reply-editor {
+  @apply w-auto mx-10;
+}
+
+.post .reply-editor textarea {
+  @apply textarea textarea-bordered my-4 w-full;
+}
+
+.reply {
+  @apply bg-gray-100 rounded-lg p-4 mb-4;
+}

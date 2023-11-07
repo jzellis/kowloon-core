@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Kowloon from "../../lib/Kowloon";
 import { useSelector, useDispatch } from 'react-redux';
-import { hideImageModal } from "../../../store/ui";
+import { hideImageModal } from "../../store/ui";
 
 const ImageModal = () => {
 
