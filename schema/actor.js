@@ -7,7 +7,7 @@ const Schema = mongoose.Schema;
 const ActorSchema = AsObjectSchema.clone();
 
 ActorSchema.add({
-  preferredUsername: { type: String, required: true, alias: "username" },
+  username: { type: String, required: true, alias: "preferredUsername" },
   type: {
     type: String,
     enum: [
@@ -55,6 +55,12 @@ ActorSchema.pre("save", async function (next) {
     `@${this.preferredUsername}@${
       (await Settings.findOne({ name: "asDomain" })).value
     }`;
+
+  this.href =
+    this.href ||
+    `${(await Settings.findOne({ name: "domain" })).value}/users/${
+      this.username
+    }`;
   if (!this.publicKey) {
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
       modulusLength: 4096,
@@ -75,8 +81,8 @@ ActorSchema.pre("save", async function (next) {
         (
           await Circle.create({
             creator: this._id,
-            name: "Admin Friends",
-            description: "Circle for friends of Admin",
+            name: `${this.name}'s Friends`,
+            description: `Circle for friends of ${this.name}`,
             members: [],
             public: false,
           })
@@ -87,6 +93,8 @@ ActorSchema.pre("save", async function (next) {
         (await Settings.findOne({ name: "domain" })).value
       }/icons/avatar.png`;
   }
+
+  if (typeof this.location == "string") this.location = { name: this.location };
   next();
 });
 

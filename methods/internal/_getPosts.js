@@ -10,17 +10,14 @@ export default async function handler(
   }
 ) {
   try {
-    console.log(query);
-    let total = await Post.countDocuments({});
-    console.log("Total: ", total);
-    let posts = await Post.find(query)
+    let items = await Post.find(query)
       .sort(options.sort)
       .skip((page - 1) * options.pageLength)
       .limit(options.pageLength);
 
     if (options.populate.length > 0) {
-      posts = await Promise.all(
-        posts.map(async (post) => {
+      items = await Promise.all(
+        items.map(async (post) => {
           if (options.populate.includes("actors"))
             post.actor = await this.getActor(post.actor);
 
@@ -31,7 +28,7 @@ export default async function handler(
         })
       );
     }
-    return { page, total, posts };
+    return items;
   } catch (error) {
     return { error };
   }

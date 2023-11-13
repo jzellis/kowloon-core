@@ -4,7 +4,7 @@ export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
   if (req.user) {
-    Kowloon.setUser(req.user);
+    Kowloon._setUser(req.user);
     response = await Kowloon.createPost(req.body);
   } else {
     status = 401;

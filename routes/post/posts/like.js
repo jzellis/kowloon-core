@@ -4,7 +4,7 @@ export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
   if (req.user) {
-    Kowloon.setUser(req.user);
+    Kowloon._setUser(req.user);
     await Kowloon.likePost(req.body);
   } else {
     status = 401;

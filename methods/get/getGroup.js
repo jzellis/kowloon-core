@@ -1,3 +1,7 @@
 export default async function (id) {
-  return this.sanitize(await this._getGroup(id));
+  try {
+    return this.sanitize(await this._getGroup(id));
+  } catch (error) {
+    return { error };
+  }
 }

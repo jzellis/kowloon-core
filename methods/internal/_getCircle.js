@@ -9,7 +9,7 @@ export default async function handler(
     if (options.populate.includes("creator"))
       circle.creator = await this.getActor(circle.creator);
     if (options.populate.includes("members"))
-      circle.members = await Actor.find({ id: { $in: post.members } });
+      circle.members = await Actor.find({ id: { $in: circle.members } });
     return circle;
   } catch (error) {
     return { error };

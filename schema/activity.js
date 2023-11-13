@@ -47,7 +47,7 @@ ActivitySchema.add({
     default: "Create",
     alias: "verb",
   },
-  public: { type: Boolean, default: false },
+  public: { type: Boolean, default: true },
   object: { type: Object, alias: "post" },
   objectType: { type: String, default: "Post" },
   to: { type: [String], default: [] },
@@ -63,13 +63,21 @@ ActivitySchema.pre("save", async function (next) {
     `${(await Settings.findOne({ name: "domain" })).value}/activities/${
       this._id
     }`;
+
+  this.href =
+    this.href ||
+    `${(await Settings.findOne({ name: "domain" })).value}/activities/${
+      this._id
+    }`;
   // if (!this.actor) this.actor = "@" + (await Settings.findOne({ name: "domain" })).value;
   if (this.object && this.object.to) this.to = this.object.to;
   if (this.object && this.object.cc) this.cc = this.object.cc;
   if (this.object && this.object.bto) this.bto = this.object.bto;
   if (this.object && this.object.bcc) this.bcc = this.object.bcc;
-  if (this.object) this.public = this.object.public;
+  if (!this.public && this.object && this.object.public)
+    this.public = this.object.public;
   if (this.object && this.object.audience) this.audience = this.object.audience;
+  if (this.object.partOf) this.partOf = this.object.partOf;
 
   // If this object and this object has an id, replace the object with the id, so this is a reference to it rather than the entire object
   if (this.object && this.object.id) this.object = this.object.id;
@@ -80,14 +88,18 @@ ActivitySchema.pre("save", async function (next) {
       type: "Collection",
     };
 
-  if (this.partOf) {
-    this.public = (await Group.findOne({ id: this.partOf })).public;
-    this.audience = {
-      "@context": "https://www.w3.org/ns/activitystreams",
-      id: this.partOf,
-      type: "Group",
-    };
-  }
+  // if (this.partOf) {
+  //   let group = await Group.findOne({ id: this.object.partOf });
+  //   this.public = group.public;
+  //   this.bcc = this.bcc
+  //     ? Array.from(new Set([...this.bcc, ...group.members]))
+  //     : [...group.members];
+  //   this.audience = {
+  //     "@context": "https://www.w3.org/ns/activitystreams",
+  //     id: this.partOf,
+  //     type: "Group",
+  //   };
+  // }
   next();
 });
 

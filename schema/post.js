@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
-import { Group, Settings } from "./index.js";
+import { Group, Settings, Circle } from "./index.js";
 import sanitizeHtml from "sanitize-html";
 import { marked } from "marked";
 const PostSchema = AsObjectSchema.clone();
@@ -19,6 +19,7 @@ PostSchema.add({
   attributedTo: { type: Object },
   likes: { type: [Object], default: [] },
   replies: { type: [ReplySchema], default: [] },
+  link: { type: String },
   quotes: { type: [Object], default: [] },
   to: { type: [String], default: [] },
   bto: { type: [String], default: [] },
@@ -30,6 +31,7 @@ PostSchema.add({
   },
   published: Date,
   public: { type: Boolean, default: false },
+  circle: { type: String },
   flagged: { type: Boolean, default: false },
   publicCanReply: { type: Boolean, default: false },
   characterCount: { type: Number, default: 0 },
@@ -46,7 +48,9 @@ PostSchema.pre("save", async function (next) {
   this.id =
     this.id ||
     `${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
-
+  this.href =
+    this.href ||
+    `${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
   // This needs to do sanitizing at some point but for now we'll just leave it
   // this.content = this.content ? this.content : this.source.content;
   this.source.mediaType = this.source.mediaType || "text/html";
@@ -71,12 +75,24 @@ PostSchema.pre("save", async function (next) {
   // Makes the post privacy match the group's privacy if it's a group post
 
   if (this.partOf) {
-    this.public = (await Group.findOne({ id: this.partOf })).public;
+    let group = await Group.findOne({ id: this.partOf });
+    this.public = group.public;
     this.audience = {
       "@context": "https://www.w3.org/ns/activitystreams",
       id: this.partOf,
       type: "Group",
     };
+    this.bcc = Array.from(new Set([...this.bcc, ...group.members]));
+  }
+  if (this.circle) {
+    let circle = await Circle.findOne({ id: this.circle });
+    this.public = false;
+    this.audience = {
+      "@context": "https://www.w3.org/ns/activitystreams",
+      id: this.circle,
+      type: "Circle",
+    };
+    this.bcc = Array.from(new Set([...this.bcc, ...circle.members]));
   }
 
   next();

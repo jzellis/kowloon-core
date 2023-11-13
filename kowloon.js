@@ -8,6 +8,7 @@ import _getActors from "./methods/internal/_getActors.js";
 import _getCircle from "./methods/internal/_getCircle.js";
 import _getCircles from "./methods/internal/_getCircles.js";
 import _getGroup from "./methods/internal/_getGroup.js";
+import _getGroups from "./methods/internal/_getGroups.js";
 import _getPost from "./methods/internal/_getPost.js";
 import _getPosts from "./methods/internal/_getPosts.js";
 import _getSettings from "./methods/internal/_getSettings.js";
@@ -24,23 +25,36 @@ import getActivity from "./methods/get/getActivity.js";
 import getActivities from "./methods/get/getActivities.js";
 import getActor from "./methods/get/getActor.js";
 import getActors from "./methods/get/getActors.js";
-import getActorPosts from "./methods/get/getActorPosts.js";
-import getActorTimeline from "./methods/get/getActorTimeline.js";
+import getActorInbox from "./methods/get/getActorInbox.js";
+import getActorOutbox from "./methods/get/getActorOutbox.js";
 import getCircle from "./methods/get/getCircle.js";
-import getCirclePosts from "./methods/get/getCirclePosts.js";
 import getGroup from "./methods/get/getGroup.js";
-import getGroupPosts from "./methods/get/getGroupPosts.js";
+import getGroupInbox from "./methods/get/getGroupInbox.js";
 import getPost from "./methods/get/getPost.js";
-import getPublicTimeline from "./methods/get/getPublicTimeline.js";
-import init from "./methods/other/init.js";
+import getPosts from "./methods/get/getPosts.js";
+import getPublicInbox from "./methods/get/getPublicInbox.js";
+import getPublicOutbox from "./methods/get/getPublicOutbox.js";
+import init from "./methods/internal/init.js";
 import likePost from "./methods/other/likePost.js";
 import login from "./methods/other/login.js";
 import sanitize from "./methods/internal/sanitize.js";
-import setUser from "./methods/other/setUser.js";
+import _setUser from "./methods/internal/_setUser.js";
 import unlikePost from "./methods/other/unlikePost.js";
 import joinGroup from "./methods/other/joinGroup.js";
 import addActorToCircle from "./methods/other/addActorToCircle.js";
-import removeUserFromCircle from "./methods/other/removeUserFromCircle.js";
+import removeUserFromCircle from "./methods/other/removeActorFromCircle.js";
+import __reset from "./methods/internal/__reset.js";
+import togglePostLike from "./methods/other/togglePostLike.js";
+import followActor from "./methods/other/followActor.js";
+import unfollowActor from "./methods/other/unfollowActor.js";
+import blockActor from "./methods/other/blockActor.js";
+import unblockActor from "./methods/other/unblockActor.js";
+import _countActivities from "./methods/internal/_countActivities.js";
+import _countActors from "./methods/internal/_countActors.js";
+import _countCircles from "./methods/internal/_countCircles.js";
+import _countGroups from "./methods/internal/_countGroups.js";
+import _countPosts from "./methods/internal/_countPosts.js";
+import _countUsers from "./methods/internal/_countUsers.js";
 // const serverMethodDir = __dirname + `/methods/server/`;
 const methodDir = `./methods/`;
 const Kowloon = {
@@ -94,6 +108,7 @@ const Kowloon = {
   _getCircle,
   _getCircles,
   _getGroup,
+  _getGroups,
   _getPost,
   _getPosts,
   _getSettings,
@@ -110,23 +125,36 @@ const Kowloon = {
   getActivities,
   getActor,
   getActors,
-  getActorPosts,
-  getActorTimeline,
+  getActorInbox,
+  getActorOutbox,
   getCircle,
-  getCirclePosts,
   getGroup,
-  getGroupPosts,
+  getGroupInbox,
   getPost,
-  getPublicTimeline,
+  getPosts,
+  getPublicInbox,
+  getPublicOutbox,
   init,
   likePost,
   login,
   sanitize,
-  setUser,
+  _setUser,
   unlikePost,
   joinGroup,
   addActorToCircle,
   removeUserFromCircle,
+  __reset,
+  togglePostLike,
+  followActor,
+  unfollowActor,
+  blockActor,
+  unblockActor,
+  _countActivities,
+  _countActors,
+  _countCircles,
+  _countGroups,
+  _countPosts,
+  _countUsers,
 };
 await Kowloon.init();
 

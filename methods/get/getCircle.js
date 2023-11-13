@@ -1,3 +1,7 @@
 export default async function (id) {
-  return this.sanitize(await this._getCircle(id));
+  try {
+    return this.sanitize(await this._getCircle(id));
+  } catch (error) {
+    return { error };
+  }
 }

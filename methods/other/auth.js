@@ -11,7 +11,7 @@ export default async function handler(accessToken) {
     this.user = user;
     this.actor = await Actor.findOne({ _id: user.actor });
     return user;
-  } catch (e) {
-    return { error: e };
+  } catch (error) {
+    return { error };
   }
 }

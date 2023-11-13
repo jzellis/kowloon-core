@@ -6,6 +6,8 @@ const GroupSchema = AsObjectSchema.clone();
 
 GroupSchema.add({
   name: { type: String, required: true },
+  href: { type: String },
+  icon: { type: String },
   description: { type: String, default: "" },
   type: { type: String, default: "Group" },
   members: { type: [Object], default: [], alias: "items" },
@@ -22,7 +24,9 @@ GroupSchema.pre("save", async function (next) {
   this.id =
     this.id ||
     `${(await Settings.findOne({ name: "domain" })).value}/groups/${this._id}`;
-
+  this.href =
+    this.href ||
+    `${(await Settings.findOne({ name: "domain" })).value}/groups/${this._id}`;
   if (this.$isNew && (!this.publicKey || !this.privateKey)) {
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
       modulusLength: 4096,
