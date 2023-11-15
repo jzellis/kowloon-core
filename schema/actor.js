@@ -56,11 +56,13 @@ ActorSchema.pre("save", async function (next) {
       (await Settings.findOne({ name: "asDomain" })).value
     }`;
 
-  this.href =
-    this.href ||
-    `${(await Settings.findOne({ name: "domain" })).value}/users/${
-      this.username
-    }`;
+  if (this.type != "Feed") {
+    this.href =
+      this.href ||
+      `${(await Settings.findOne({ name: "domain" })).value}/users/${
+        this.username
+      }`;
+  }
   if (!this.publicKey) {
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
       modulusLength: 4096,

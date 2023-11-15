@@ -18,8 +18,8 @@ const sanitizeObject = (object) => {
   }
   if (
     typeof object === "object" &&
-    object !== null
-    // && object.constructor === Object
+    object !== null &&
+    object.constructor === Object
   ) {
     Object.keys(object).map((key) => {
       if (sanitizedFields.includes(key)) {

@@ -69,7 +69,7 @@ router.use(async (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,POST,OPTIONS");
   res.header("Access-Control-Allow-Headers", "*");
-
+  console.log(req.headers.authorization);
   let token = req.headers.authorization
     ? req.headers.authorization.split("Bearer ")[1]
     : undefined;

@@ -152,7 +152,10 @@ export default async function handler() {
 
     console.log(`Users: ${await User.countDocuments()}`);
     console.log(`Posts: ${await Post.countDocuments()}`);
-    console.log(`Actors: ${await Actor.countDocuments()}`);
+    console.log(
+      `Actors: ${await Actor.countDocuments({ type: { $ne: "Feed" } })}`
+    );
+    console.log(`Feeds: ${await Actor.countDocuments({ type: "Feed" })}`);
     console.log(`Activities: ${await Activity.countDocuments()}`);
     console.log(`Groups: ${await Group.countDocuments()}`);
     console.log(`Circles: ${await Circle.countDocuments()}`);

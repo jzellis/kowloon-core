@@ -1,3 +1,4 @@
+// Doesn't do anything yet
 import Kowloon from "../../kowloon.js";
 
 export default async function handler(req, res, next) {

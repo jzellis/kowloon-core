@@ -4,60 +4,70 @@ import fs from "fs/promises";
 export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
+  let uploadDir = "public";
+  let fullDir, publicDir;
+  let re = /(?:\.([^.]+))?$/;
   if (!req.user) {
     response = { error: "Not logged in" };
   } else {
-    const form = formidable({ uploadDir: "./public/uploads" });
-
+    const form = formidable({ uploadDir: `./${uploadDir}` });
+    const [fields, files] = await form.parse(req);
+    let filenames = fields["filenames"] || null;
+    const destination =
+      fields && fields["destination"] ? fields["destination"] : null;
+    const uploads = files.uploads || [];
+    const returnedFiles = [];
     const year = new Date().getFullYear();
     const month = new Date().getMonth() + 1;
     const day = new Date().getDate();
 
-    try {
-      await fs.access(`${form.uploadDir}/${year}`);
-    } catch (e) {
-      await fs.mkdir(`${form.uploadDir}/${year}`);
+    if (!fields["destination"]) {
+      try {
+        await fs.access(`${form.uploadDir}/${year}`);
+      } catch (e) {
+        await fs.mkdir(`${form.uploadDir}/${year}`);
+      }
+
+      try {
+        await fs.access(`${form.uploadDir}/${year}/${month}`);
+      } catch (e) {
+        await fs.mkdir(`${form.uploadDir}/${year}/${month}`);
+      }
+
+      try {
+        await fs.access(`${form.uploadDir}/${year}/${month}/${day}`);
+      } catch (e) {
+        await fs.mkdir(`${form.uploadDir}/${year}/${month}/${day}`);
+      }
+
+      fullDir = `${form.uploadDir}/uploads/${year}/${month}/${day}`;
+      publicDir = `/${uploadDir}/uploads/${year}/${month}/${day}`;
+    } else {
+      try {
+        await fs.access(`${form.uploadDir}/${fields["destination"]}`);
+      } catch (e) {
+        await fs.mkdir(`${form.uploadDir}/${fields["destination"]}`);
+      }
+      fullDir = `${form.uploadDir}/${fields["destination"]}`;
+      publicDir = `/${uploadDir}/${fields["destination"]}`;
     }
 
     try {
-      await fs.access(`${form.uploadDir}/${year}/${month}`);
-    } catch (e) {
-      await fs.mkdir(`${form.uploadDir}/${year}/${month}`);
-    }
-
-    try {
-      await fs.access(`${form.uploadDir}/${year}/${month}/${day}`);
-    } catch (e) {
-      await fs.mkdir(`${form.uploadDir}/${year}/${month}/${day}`);
-    }
-
-    // if (!(await fs.access(`${form.uploadDir}/${year}`))) {
-    //   await fs.mkdir(`${form.uploadDir}/${year}`);
-    // }
-
-    // if (!(await fs.access(`${form.uploadDir}/${year}/${month}`))) {
-    //   await fs.mkdir(`${form.uploadDir}/${year}/${month}`);
-    // }
-
-    // if (!(await fs.access(`${form.uploadDir}/${year}/${month}/${day}`))) {
-    //   await fs.mkdir(`${form.uploadDir}/${year}/${month}/${day}`);
-    // }
-
-    const fullDir = `${form.uploadDir}/${year}/${month}/${day}`;
-    const publicDir = `/public/uploads/${year}/${month}/${day}`;
-
-    try {
-      const [fields, files] = await form.parse(req);
-      const uploads = files.uploads || [];
-      const returnedFiles = [];
-
       await Promise.all(
-        uploads.map(async (file) => {
+        uploads.map(async (file, i) => {
           let uploadPath = file.filepath;
-          let target = `${fullDir}/${req.user._id}-${file.newFilename}-${file.originalFilename}`;
+          let target =
+            filenames && filenames[i]
+              ? `${fullDir}/${filenames[i]}.${
+                  re.exec(file.originalFilename)[1]
+                }`
+              : `${fullDir}/${req.user._id}-${file.newFilename}-${file.originalFilename}`;
           await fs.rename(uploadPath, target);
           returnedFiles.push({
-            href: `${Kowloon.settings.domain}${publicDir}/${req.user._id}-${file.newFilename}-${file.originalFilename}`,
+            href:
+              filenames && filenames[i]
+                ? `${Kowloon.settings.domain}${publicDir}/${req.user._id}-${file.newFilename}-${file.originalFilename}`
+                : `${Kowloon.settings.domain}${publicDir}/${filenames[i]}`,
             type: file.mimetype,
           });
         })

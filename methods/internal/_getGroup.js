@@ -1,8 +1,10 @@
 import { Actor, Group } from "../../schema/index.js";
-
+import { Types } from "mongoose";
 export default async function handler(id, options = { populate: [] }) {
   try {
-    let group = await Group.findOne({ _id: id });
+    let ObjectId = Types.ObjectId;
+    let query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: id };
+    let group = await Group.findOne(query);
     if (options.populate.length > 0) {
       if (options.populate.includes("creator"))
         group.creator = await this.getActor(group.creator);

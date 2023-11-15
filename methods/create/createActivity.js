@@ -111,6 +111,10 @@ export default async function (activity) {
         );
         break;
       case "Like":
+        await Actor.findOneAndUpdate(
+          { id: activity.actor },
+          { $push: { likes: activity.target } }
+        );
         response.post = await Post.findOneAndUpdate(
           { id: activity.target },
           { $push: { likes: activity.object } },
@@ -121,6 +125,10 @@ export default async function (activity) {
 
         break;
       case "Unlike":
+        await Actor.findOneAndUpdate(
+          { id: activity.actor },
+          { $pull: { likes: activity.target } }
+        );
         response.post = await Post.findOneAndUpdate(
           { id: activity.target },
           { $pull: { likes: activity.object } },
@@ -129,6 +137,26 @@ export default async function (activity) {
         activity.objectType = "Post";
         activity.href = response.post.href;
 
+        break;
+      case "Bookmark":
+        await Actor.findOneAndUpdate(
+          { id: activity.actor },
+          { $push: { bookmarks: activity.target } }
+        );
+        response.post = await Post.findOne({ id: activity.target });
+
+        activity.objectType = "Post";
+        activity.href = response.post.href;
+
+        break;
+      case "Unbookmark":
+        await Actor.findOneAndUpdate(
+          { id: activity.actor },
+          { $pull: { bookmarks: activity.target } }
+        );
+        response.post = await Post.findOne({ id: activity.target });
+        activity.objectType = "Post";
+        activity.href = response.post.href;
         break;
       case "Reply":
         response.post = await Post.create(activity.object);

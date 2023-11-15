@@ -1,3 +1,7 @@
+/**
+ * @namespace kowloon
+ */
+
 import _createUser from "./methods/internal/_createUser.js";
 import _deleteUser from "./methods/internal/_deleteUser.js";
 import _updateUser from "./methods/internal/_updateUser.js";
@@ -28,6 +32,7 @@ import getActors from "./methods/get/getActors.js";
 import getActorInbox from "./methods/get/getActorInbox.js";
 import getActorOutbox from "./methods/get/getActorOutbox.js";
 import getCircle from "./methods/get/getCircle.js";
+import getCirclePosts from "./methods/get/getCirclePosts.js";
 import getGroup from "./methods/get/getGroup.js";
 import getGroupInbox from "./methods/get/getGroupInbox.js";
 import getPost from "./methods/get/getPost.js";
@@ -55,6 +60,7 @@ import _countCircles from "./methods/internal/_countCircles.js";
 import _countGroups from "./methods/internal/_countGroups.js";
 import _countPosts from "./methods/internal/_countPosts.js";
 import _countUsers from "./methods/internal/_countUsers.js";
+import _retrieveFeeds from "./methods/internal/_retrieveFeeds.js";
 // const serverMethodDir = __dirname + `/methods/server/`;
 const methodDir = `./methods/`;
 const Kowloon = {
@@ -128,6 +134,7 @@ const Kowloon = {
   getActorInbox,
   getActorOutbox,
   getCircle,
+  getCirclePosts,
   getGroup,
   getGroupInbox,
   getPost,
@@ -155,6 +162,7 @@ const Kowloon = {
   _countGroups,
   _countPosts,
   _countUsers,
+  _retrieveFeeds,
 };
 await Kowloon.init();
 
