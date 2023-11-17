@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import {
   Activity,
   Actor,
@@ -10,6 +13,8 @@ import {
 export default async function (activity) {
   try {
     let response = {};
+    let actor = await this._getActor(activity.actor);
+    if (!actor) actor = await Actor.findOne({ _id: this.settings.serverUser });
     switch (activity.type) {
       case "Create":
         switch (true) {
@@ -35,6 +40,7 @@ export default async function (activity) {
           case activity.objectType == "Post" ||
             this.postTypes.includes(activity.objectType) ||
             activity.objectType == "Post":
+            activity.object.signature = actor.publicKey;
             response.post = await Post.create(activity.object);
             activity.object = response.post.id;
             activity.objectType = "Post";
@@ -61,7 +67,7 @@ export default async function (activity) {
             activity.object = response.post.id;
             activity.objectType = "Post";
             activity.href = response.post.href;
-
+            if (response.post.circle) activity.circle = response.post.circle;
             break;
           case activity.objectType == "Actor":
             let originalActor = await Actor.findOne({ id: activity.target });

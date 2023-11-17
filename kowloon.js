@@ -1,3 +1,5 @@
+// Imports and re - imports all methods that need to be defined in order to be consistent with the specification
+
 /**
  * @namespace kowloon
  */
@@ -24,7 +26,6 @@ import createActor from "./methods/create/createActor.js";
 import createCircle from "./methods/create/createCircle.js";
 import createGroup from "./methods/create/createGroup.js";
 import createPost from "./methods/create/createPost.js";
-import createReply from "./methods/create/createReply.js";
 import getActivity from "./methods/get/getActivity.js";
 import getActivities from "./methods/get/getActivities.js";
 import getActor from "./methods/get/getActor.js";
@@ -61,8 +62,12 @@ import _countGroups from "./methods/internal/_countGroups.js";
 import _countPosts from "./methods/internal/_countPosts.js";
 import _countUsers from "./methods/internal/_countUsers.js";
 import _retrieveFeeds from "./methods/internal/_retrieveFeeds.js";
+import _createSetting from "./methods/internal/_createSetting.js";
+import _updateSetting from "./methods/internal/_updateSetting.js";
+import _setup from "./methods/internal/_setup.js";
+import _generatePassword from "./methods/internal/_generatePassword.js";
 // const serverMethodDir = __dirname + `/methods/server/`;
-const methodDir = `./methods/`;
+/** @type {*} */
 const Kowloon = {
   settings: {},
   user: null,
@@ -126,7 +131,6 @@ const Kowloon = {
   createCircle,
   createGroup,
   createPost,
-  createReply,
   getActivity,
   getActivities,
   getActor,
@@ -163,6 +167,10 @@ const Kowloon = {
   _countPosts,
   _countUsers,
   _retrieveFeeds,
+  _createSetting,
+  _updateSetting,
+  _setup,
+  _generatePassword,
 };
 await Kowloon.init();
 

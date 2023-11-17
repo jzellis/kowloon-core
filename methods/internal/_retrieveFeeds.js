@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Actor, Post } from "../../schema/index.js";
 import Parser from "rss-parser";
 import { getLinkPreview, getPreviewFromContent } from "link-preview-js";

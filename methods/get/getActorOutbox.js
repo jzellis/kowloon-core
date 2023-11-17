@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (
   actorId,
   page,

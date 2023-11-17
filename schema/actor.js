@@ -1,9 +1,14 @@
+/**
+ * @namespace kowloon
+ */
 import { generateKeyPairSync } from "crypto";
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
 import { Circle, Settings } from "./index.js";
 
 const Schema = mongoose.Schema;
+/** @class Actor */
+
 const ActorSchema = AsObjectSchema.clone();
 
 ActorSchema.add({
@@ -37,6 +42,12 @@ ActorSchema.add({
     type: Object,
     default: {
       defaultPostType: "Note",
+      defaultView: {
+        postType: "",
+        circle: "",
+      },
+      theme: "system",
+      pronouns: null,
     },
   },
 });
@@ -59,7 +70,7 @@ ActorSchema.pre("save", async function (next) {
   if (this.type != "Feed") {
     this.href =
       this.href ||
-      `${(await Settings.findOne({ name: "domain" })).value}/users/${
+      `//${(await Settings.findOne({ name: "domain" })).value}/users/${
         this.username
       }`;
   }
@@ -78,23 +89,33 @@ ActorSchema.pre("save", async function (next) {
 
     this.publicKey = publicKey;
     this.privateKey = privateKey;
-    if (this.circles.length === 0)
-      this.circles = [
-        (
-          await Circle.create({
-            creator: this._id,
-            name: `${this.name}'s Friends`,
-            description: `Circle for friends of ${this.name}`,
-            members: [],
-            public: false,
-          })
-        )._id,
-      ];
-    if (!this.icon)
-      this.icon = `${
-        (await Settings.findOne({ name: "domain" })).value
-      }/icons/avatar.png`;
   }
+  if (typeof this.location === "string")
+    this.location = {
+      name: this.location,
+    };
+
+  if (!this.prefs.pronouns)
+    this.prefs.pronouns = (
+      await Settings.findOne({ name: "defaultPronouns" })
+    ).value;
+
+  if (this.circles.length === 0)
+    this.circles = [
+      (
+        await Circle.create({
+          creator: this._id,
+          name: `${this.name}'s Friends`,
+          description: `Circle for friends of ${this.name}`,
+          members: [],
+          public: false,
+        })
+      )._id,
+    ];
+  if (!this.icon)
+    this.icon = `${
+      (await Settings.findOne({ name: "domain" })).value
+    }/icons/avatar.png`;
 
   if (typeof this.location == "string") this.location = { name: this.location };
   next();

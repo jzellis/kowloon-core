@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Circle } from "../../schema/index.js";
 
 export default async function (query) {

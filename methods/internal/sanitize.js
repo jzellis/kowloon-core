@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 const sanitizedFields = [
   "bto",
   "bcc",
@@ -9,6 +12,7 @@ const sanitizedFields = [
   "_id",
   "__v",
   "user",
+  "prefs",
 ];
 
 const sanitizeObject = (object) => {
@@ -18,8 +22,8 @@ const sanitizeObject = (object) => {
   }
   if (
     typeof object === "object" &&
-    object !== null &&
-    object.constructor === Object
+    object !== null
+    // && object.constructor === Object
   ) {
     Object.keys(object).map((key) => {
       if (sanitizedFields.includes(key)) {

@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (circle) {
   try {
     const actor = await this.getActor(circle.actor);

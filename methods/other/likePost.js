@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (activity) {
   try {
     const regex = new RegExp("^[aeiou].*", "i");

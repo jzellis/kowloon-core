@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 // This gets posts from users in a circle
 
 export default async function (id, page = 1, options = { deleted: false }) {

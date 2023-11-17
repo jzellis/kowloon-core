@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Post } from "../../schema/index.js";
 
 export default async function handler(

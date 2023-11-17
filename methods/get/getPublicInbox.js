@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 // This isn't really needed yet, but I'll add it when federation is implemented.
 
 export default async function (

@@ -1,5 +1,10 @@
-import mongoose from "mongoose";
+/**
+         * @namespace kowloon
+         */
+        import mongoose from "mongoose";
 const Schema = mongoose.Schema;
+/** @class Settings */
+
 const SettingsSchema = new Schema(
   {
     name: { type: String, required: true, unique: true },

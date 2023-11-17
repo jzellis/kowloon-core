@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Group } from "../../schema/index.js";
 
 export default async function (post) {
@@ -14,12 +17,13 @@ export default async function (post) {
       cc: post.cc,
       bto: post.bto,
       bcc: post.bcc,
+      signature: actor.publicKey,
     };
     if (!post.type) return new Error("Post type is required");
 
-    let summary = `${actor.name} created ${
-      regex.test(post.type) ? "an" : "a"
-    } ${post.type}${post.title ? ": " + post.title : ""}`;
+    let summary = `${actor.name} posted ${regex.test(post.type) ? "an" : "a"} ${
+      post.type
+    }${post.title ? ": " + post.title : ""}`;
     if (post.partOf) {
       activity.partOf = post.partOf;
       let group = await this._getGroup(post.partOf);

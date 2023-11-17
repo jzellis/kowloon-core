@@ -1,8 +1,11 @@
+/**
+ * @namespace kowloon
+ */
 import { Actor, Group } from "../../schema/index.js";
 import { Types } from "mongoose";
+const ObjectId = Types.ObjectId;
 export default async function handler(id, options = { populate: [] }) {
   try {
-    let ObjectId = Types.ObjectId;
     let query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: id };
     let group = await Group.findOne(query);
     if (options.populate.length > 0) {

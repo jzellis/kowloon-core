@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (id, page = 1, options = { deleted: false }) {
   try {
     let group = await this._getGroup(id);

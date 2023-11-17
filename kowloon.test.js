@@ -5,51 +5,45 @@ import { Actor } from "./schema/index.js";
 console.time("test");
 
 try {
-  //   let numUsers = process.argv[2] || 10;
-  //   let numGroups = process.argv[3] || 10;
-  //   let numPosts = process.argv[4] || 100;
+  await Kowloon.__reset();
+  let setup = await Kowloon._setup();
+  console.log(Object.keys(setup));
+  // let numUsers = process.argv[2] || 50;
+  // let numGroups = process.argv[3] || 10;
+  // let numPosts = process.argv[4] || 100;
 
-  //   console.log(parseInt(parseInt(numPosts) + parseInt(numUsers) + 1));
+  // console.log("Resetting database...", await Kowloon.__reset());
 
-  //   const allUsers = [];
-  //   const allActors = [];
-  //   const allPosts = [];
-  //   const allCircles = [];
-  //   const allActivities = [];
-  //   const allGroups = [];
-  //   await Kowloon.__reset();
+  // let user = await Kowloon._createUser({
+  //   username: "test",
+  //   password: "test",
+  //   email: "test@test.com",
+  //   isAdmin: true,
+  //   name: "Test User",
+  //   bio: "This is a test user",
+  //   location: "London, UK",
+  // });
 
-  //   let user = await Kowloon._createUser({
-  //     username: "test",
-  //     password: "test",
-  //     email: "test@test.com",
-  //     isAdmin: true,
-  //     name: "Test User",
-  //     bio: "This is a test user",
-  //     location: "London, UK",
+  // for (let i = 0; i < numUsers; i++) {
+  //   let firstName = faker.person.firstName();
+  //   let lastName = faker.person.lastName();
+  //   let username =
+  //     `${firstName.toLowerCase()}${lastName.toLowerCase()}`.replace(
+  //       /['.,\/#!$%\^&\*;:{}=\-_`~()]/g,
+  //       ""
+  //     );
+  //   let u = await Kowloon._createUser({
+  //     username: username,
+  //     password: faker.internet.password(),
+  //     email: faker.internet.email(),
+  //     name: `${firstName} ${lastName}`,
+  //     bio: faker.lorem.sentence(),
+  //     location: `${faker.location.city()}, ${faker.location.countryCode()}`,
   //   });
-
-  //   let actor = user.actor;
-  //   allUsers.push(user);
-  //   allActors.push(actor);
-
-  //   for (let i = 0; i < numUsers; i++) {
-  //     let firstName = faker.person.firstName();
-  //     let lastName = faker.person.lastName();
-  //     let username =
-  //       `${firstName.toLowerCase()}${lastName.toLowerCase()}`.replace(
-  //         /['.,\/#!$%\^&\*;:{}=\-_`~()]/g,
-  //         ""
-  //       );
-  //     let u = await Kowloon._createUser({
-  //       username: username,
-  //       password: faker.internet.password(),
-  //       email: faker.internet.email(),
-  //       name: `${firstName} ${lastName}`,
-  //       bio: faker.lorem.sentence(),
-  //       location: `${faker.location.city()}, ${faker.location.countryCode()}`,
-  //     });
-
+  //   console.log("Created user ", u.id);
+  // }
+  // let allUsers = await Kowloon.getActors();
+  // console.log("Number of users: ", allUsers.length);
   //     let uCircle = u.actor.circles[0];
   //     let friends = faker.helpers
   //       .arrayElements(allActors, {
@@ -176,14 +170,14 @@ try {
   //       parseInt(parseInt(numPosts) + parseInt(numUsers) + 1)
   //   );
 
-  await Actor.deleteMany({ type: "Feed" });
+  // await Actor.deleteMany({ type: "Feed" });
 
-  let actors = JSON.parse(await fs.readFile("feedactors.json", "utf8"));
-  await Kowloon.createActor(actors);
+  // let actors = JSON.parse(await fs.readFile("feedactors.json", "utf8"));
+  // await Kowloon.createActor(actors);
 
-  console.log("Retrieving new feed items...");
-  let feeds = (await Actor.find({ type: "Feed" }, { id: 1 })).map((f) => f.id);
-  console.log(await Kowloon._retrieveFeeds(feeds));
+  // console.log("Retrieving new feed items...");
+  // let feeds = (await Actor.find({ type: "Feed" }, { id: 1 })).map((f) => f.id);
+  // console.log(await Kowloon._retrieveFeeds(feeds));
 } catch (error) {
   console.error(error);
 }

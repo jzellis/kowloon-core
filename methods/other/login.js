@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import {
   Activity,
   Actor,

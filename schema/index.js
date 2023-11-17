@@ -1,4 +1,7 @@
-import Activity from "./activity.js";
+/**
+         * @namespace kowloon
+         */
+        import Activity from "./activity.js";
 import Actor from "./actor.js";
 import Circle from "./circle.js";
 import Group from "./group.js";

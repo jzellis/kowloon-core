@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
-import { Group, Settings, Circle } from "./index.js";
+import { Actor, Group, Settings, Circle } from "./index.js";
 import sanitizeHtml from "sanitize-html";
 import { marked } from "marked";
+import crypto from "crypto";
 const PostSchema = AsObjectSchema.clone();
 const ReplySchema = AsObjectSchema.clone();
 // import Kowloon from "../kowloon.js";
@@ -36,6 +37,7 @@ PostSchema.add({
   publicCanReply: { type: Boolean, default: false },
   characterCount: { type: Number, default: 0 },
   wordCount: { type: Number, default: 0 },
+  signature: Buffer,
 });
 
 PostSchema.index({
@@ -45,12 +47,13 @@ PostSchema.index({
 });
 
 PostSchema.pre("save", async function (next) {
+  let actor = await Actor.findOne({ id: this.actor });
   this.id =
     this.id ||
     `${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
   this.href =
     this.href ||
-    `${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
+    `//${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
   // This needs to do sanitizing at some point but for now we'll just leave it
   // this.content = this.content ? this.content : this.source.content;
   this.source.mediaType = this.source.mediaType || "text/html";
@@ -65,38 +68,24 @@ PostSchema.pre("save", async function (next) {
   }
 
   this.attributedTo = this.attributedTo || this.actor;
-  if (this.public === true && !this.audience)
-    this.audience = {
-      "@context": "https://www.w3.org/ns/activitystreams",
-      id: "https://www.w3.org/ns/activitystreams#Public",
-      type: "Collection",
-    };
-  // if (!this.cc.includes(this.actor)) this.cc.push(this.actor);
-  // Makes the post privacy match the group's privacy if it's a group post
 
-  if (this.partOf) {
-    let group = await Group.findOne({ id: this.partOf });
-    this.public = group.public;
-    this.audience = {
-      "@context": "https://www.w3.org/ns/activitystreams",
-      id: this.partOf,
-      type: "Group",
-    };
-    this.bcc = Array.from(new Set([...this.bcc, ...group.members]));
-  }
-  if (this.circle) {
-    let circle = await Circle.findOne({ id: this.circle });
-    this.public = false;
-    this.audience = {
-      "@context": "https://www.w3.org/ns/activitystreams",
-      id: this.circle,
-      type: "Circle",
-    };
-    this.bcc = Array.from(new Set([...this.bcc, ...circle.members]));
-  }
-
+  this.signature = crypto.sign(
+    "SHA256",
+    Buffer.from(JSON.stringify(this.source)),
+    actor.privateKey
+  );
   next();
 });
+
+PostSchema.methods.verifySignature = async function () {
+  let actor = await Actor.findOne({ id: this.actor });
+  return crypto.verify(
+    "SHA256",
+    JSON.stringify(this.source),
+    actor.publicKey,
+    this.signature
+  );
+};
 
 const Post = mongoose.model("Post", PostSchema);
 

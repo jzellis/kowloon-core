@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import mongoose, { Mongoose } from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -7,7 +10,6 @@ const Schema = mongoose.Schema,
   ObjectId = mongoose.Types.ObjectId,
   SALT_WORK_FACTOR = 10;
 const KEY = process.env.JWT_KEY;
-// import { ActorSchema } from "./actor.js";
 
 /**
  * @class User
@@ -29,7 +31,6 @@ const UserSchema = new Schema(
     email: { type: String, required: true },
     prefs: Object,
     actor: { type: mongoose.Types.ObjectId, ref: "Actor" },
-    isAdmin: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
     blocked: { type: Boolean, default: false },
     lastLogin: Date,
@@ -74,20 +75,7 @@ UserSchema.pre("save", async function (next) {
     this.publicKey = publicKey;
     this.privateKey = privateKey;
   }
-  // this.actor.following.id = `${domain}/@${this.username}/following`;
-  // this.actor.followers.id = `${domain}/@${this.username}/followers`;
-  // this.actor.liked.id = `${domain}/@${this.username}/liked`;
-  // this.actor.bookmarked.id = `${domain}/@${this.username}/bookmarks`;
 
-  // this.actor.circles.id = `${domain}/@${this.username}/circles`;
-  // this.actor.inbox = `${domain}/@${this.username}/inbox`;
-  // this.actor.outbox = `${domain}/@${this.username}/outbox`;
-  // this.actor.profile = `${domain}/@${this.username}`;
-
-  // this.actor.circles.map((c) => {
-  //   c.id = this.actor.id + "/circles/" + c._id;
-  //   return c;
-  // });
   next();
 });
 
@@ -101,6 +89,12 @@ UserSchema.pre("update", async function (next) {
 UserSchema.methods.verifyPassword = async function (plaintext) {
   console.log("verifying password");
   return await bcrypt.compare(plaintext, this.password);
+};
+
+UserSchema.methods.isAdmin = async function () {
+  return (await Settings.findOne({ name: "serverAdmins" })).value.includes(
+    this._id
+  );
 };
 
 const User = mongoose.model("User", UserSchema);

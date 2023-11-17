@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Activity } from "../../schema/index.js";
 export default async function handler(_id) {
   try {

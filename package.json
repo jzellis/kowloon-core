@@ -264,7 +264,6 @@
   "license": "ISC",
   "devDependencies": {
     "@faker-js/faker": "^8.0.2",
-    "jest": "^29.7.0",
-    "node-opml-parser": "^1.0.0"
+    "jest": "^29.7.0"
   }
 }

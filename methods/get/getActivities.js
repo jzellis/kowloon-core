@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (
   query = {},
   page = 1,

@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Actor, Circle } from "../../schema/index.js";
 
 export default async function (circleID, actorID) {

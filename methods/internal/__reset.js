@@ -1,9 +1,13 @@
+/**
+ * @namespace kowloon
+ */
 import {
   Activity,
   Actor,
   Circle,
   Group,
   Post,
+  Settings,
   User,
 } from "../../schema/index.js";
 
@@ -14,6 +18,7 @@ export default async function () {
     await Circle.deleteMany({});
     await Group.deleteMany({});
     await Post.deleteMany({});
+    await Settings.deleteMany({});
     await User.deleteMany({});
     return true;
   } catch (error) {

@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
-function addNamespaceToMethods(dirPath) {
+function listMethods(dirPath) {
   // Get all files and directories in the current directory
   const files = fs.readdirSync(dirPath);
 
@@ -11,18 +11,17 @@ function addNamespaceToMethods(dirPath) {
 
     if (stat.isDirectory()) {
       // Recursively call the function on subdirectories
-      addNamespaceToMethods(filePath);
+      listMethods(filePath);
     } else {
       // Check if the file is a JavaScript file
       if (path.extname(file) === ".js") {
-        // Read the file contents
         const content = fs.readFileSync(filePath, "utf8");
 
         // Add the namespace comment at the beginning of the file
         const updatedContent = `/**
- * @namespace kowloon
- */
-${content}`;
+         * @namespace kowloon
+         */
+        ${content}`;
 
         // Write the updated content back to the file
         fs.writeFileSync(filePath, updatedContent, "utf8");
@@ -32,4 +31,4 @@ ${content}`;
 }
 
 // Call the function with the methods directory path
-addNamespaceToMethods("./methods");
+listMethods("./schema");

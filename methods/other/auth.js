@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { User, Actor } from "../../schema/index.js";
 
 export default async function handler(accessToken) {

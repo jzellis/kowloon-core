@@ -1,7 +1,13 @@
+/**
+ * @namespace kowloon
+ */
 import { generateKeyPairSync } from "crypto";
 import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
 import { Settings } from "./index.js";
+
+/** @class Group */
+
 const GroupSchema = AsObjectSchema.clone();
 
 GroupSchema.add({
@@ -26,7 +32,9 @@ GroupSchema.pre("save", async function (next) {
     `${(await Settings.findOne({ name: "domain" })).value}/groups/${this._id}`;
   this.href =
     this.href ||
-    `${(await Settings.findOne({ name: "domain" })).value}/groups/${this._id}`;
+    `//${(await Settings.findOne({ name: "domain" })).value}/groups/${
+      this._id
+    }`;
   if (this.$isNew && (!this.publicKey || !this.privateKey)) {
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
       modulusLength: 4096,

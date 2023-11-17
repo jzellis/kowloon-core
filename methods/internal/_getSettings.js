@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Settings } from "../../schema/index.js";
 export default async function handler(showHidden = false) {
   const response = {};

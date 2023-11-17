@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (group) {
   try {
     const actor = await this.getActor(group.creator);

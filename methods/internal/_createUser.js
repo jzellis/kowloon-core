@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 import { Actor, User } from "../../schema/index.js";
 
 export default async function (user) {
@@ -6,15 +9,20 @@ export default async function (user) {
     password: user.password,
     email: user.email,
     name: user.name,
+    publicKey: user.publicKey || undefined,
+    privateKey: user.privateKey || undefined,
   });
 
   let actor = {
+    type: user.type || "Person",
     name: user.name,
     bio: user.bio,
     username: user.username,
-    location: user.location,
+    location: user.location || null,
     url: user.url,
     user: createdUser._id,
+    publicKey: user.publicKey || undefined,
+    privateKey: user.privateKey || undefined,
   };
   try {
     actor = await Actor.create(actor);

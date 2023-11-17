@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (query, page = 1, options = { deleted: false }) {
   try {
     if (options.deleted == false) query.deleted = { $exists: false };

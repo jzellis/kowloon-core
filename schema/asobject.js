@@ -7,7 +7,7 @@ const KEY = process.env.JWT_KEY;
 import sanitizeHtml from "sanitize-html";
 import Settings from "./settings.js";
 import User from "./user.js";
-
+/** @class ASObject */
 const AsObjectSchema = new Schema(
   {
     id: { type: String },

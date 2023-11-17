@@ -36,8 +36,6 @@ const routes = {
   get: {
     "/": indexGetRoute,
     "/outbox": indexOutboxRoute,
-
-    // "/outbox": outboxGetRoute,
     "/users/:id": userProfileGetRoute,
     "/users/:id/outbox": userOutboxGetRoute,
     "/users/:id/inbox": userInboxGetRoute,
@@ -49,17 +47,12 @@ const routes = {
     "/activities/:id": activityGetRoute,
     "/search/:query": searchRoute,
     "/preview": previewRoute,
-
-    // "/posts/:id": postGetRoute,
-    // "/activities/:id": activityGetRoute,
-    // "/groups/:id": groupGetRoute,
   },
   post: {
     "/login": loginRoute,
     "/upload": uploadRoute,
     "/users/:id/outbox": userOutboxPostRoute,
     "/posts/:postId/replies": replyPostRoute,
-    // "/login": loginPostRoute,
   },
 };
 

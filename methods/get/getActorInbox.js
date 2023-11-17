@@ -1,3 +1,6 @@
+/**
+ * @namespace kowloon
+ */
 export default async function (
   actorId,
   page,
@@ -5,6 +8,9 @@ export default async function (
 ) {
   try {
     let actor = await this._getActor(actorId);
+    let inCircles = (await this._getCircles({ members: actorId })).map(
+      (c) => c._id
+    );
     let items, total;
     options.type == ["posts", "activities"].includes(options.type)
       ? options.type
@@ -17,6 +23,7 @@ export default async function (
         { cc: actorId },
         { bto: actorId },
         { bcc: actorId },
+        { audience: { $in: inCircles } },
       ],
     };
     if (options.actorPosts == true) {
