@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+a {
+  @apply hover:text-blue-500;
+}
+
+#timeline .item .title {
+  @apply font-bold;
+}
+
+#timeline {
+  @apply w-1/2 mx-auto;
+}
+
+#timeline .item {
+  @apply w-full shadow-2xl rounded-md p-8;
+}
+
+#timeline .item .meta {
+  @apply text-sm;
+}
+
+#timeline .item .actor .avatar {
+  @apply w-8 h-8;
+}
+
+#timeline .item .content {
+  @apply mt-8 mx-8;
+}
+
+#timeline .item .actions {
+  @apply w-full flex gap-2 text-sm mt-4;
+}
+
+#timeline .item .actions li {
+  @apply w-full text-center;
+}

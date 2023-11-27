@@ -10,15 +10,17 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.7",
+    "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.12.0",
     "react-redux": "^8.1.3",
     "react-router-dom": "^6.20.0",
-    "sort-by": "^1.2.0",
+    "sort-by": "^0.0.2",
     "vite-express": "*"
   },
   "devDependencies": {

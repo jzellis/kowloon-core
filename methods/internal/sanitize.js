@@ -24,7 +24,6 @@ function sanitizeObject(obj, additionalFields = [], allowedFields = []) {
     sanitizedFields = sanitizedFields.filter(
       (el) => allowedFields.indexOf(el) === -1
     );
-  console.log(sanitizedFields, additionalFields, allowedFields);
   if (typeof obj !== "object" || obj === null) {
     // Base case: if the current value is not an object, or is null, return it as is
     return obj;

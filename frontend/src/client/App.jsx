@@ -10,7 +10,6 @@ function App() {
   const user = useSelector(state => state.user.user);
   const loggedIn = useSelector(state => state.user.loggedIn);
   const dispatch = useDispatch();
-console.log(import.meta.env)
   useEffect(() => {
     if(typeof window != "undefined"){
       if(localStorage.getItem("user")){
