@@ -53,11 +53,10 @@ const UserSchema = new Schema(
 UserSchema.pre("save", async function (next) {
   if (this.isModified("password"))
     this.password = bcrypt.hashSync(this.password, 10);
-
   if (this.isNew) {
-    this.id = `${(await Settings.findOne({ name: "domain" })).value}/@${
-      this.username
-    }`;
+    this.id =
+      this.id ||
+      `user:${this._id}@${(await Settings.findOne({ name: "domain" })).value}`;
     this.accessToken = jwt.sign(
       {
         username: this.username,
@@ -87,15 +86,14 @@ UserSchema.pre("update", async function (next) {
 
 /** Compares a plaintext password to the user's hashed password and returns true if it's correct and false otherwise. */
 UserSchema.methods.verifyPassword = async function (plaintext) {
-  console.log("verifying password");
   return await bcrypt.compare(plaintext, this.password);
 };
 
-UserSchema.methods.isAdmin = async function () {
-  return (await Settings.findOne({ name: "serverAdmins" })).value.includes(
-    this._id
-  );
-};
+// UserSchema.methods.isAdmin = async function () {
+//   return (await Settings.findOne({ name: "serverAdmins" })).value.includes(
+//     this._id
+//   );
+// };
 
 const User = mongoose.model("User", UserSchema);
 

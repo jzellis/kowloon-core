@@ -2,10 +2,13 @@
  * @namespace kowloon
  */
 import { Activity } from "../../schema/index.js";
-export default async function handler(_id) {
+import { Types } from "mongoose";
+const ObjectId = Types.ObjectId;
+export default async function handler(id) {
   try {
-    let activity = await Activity.findOne({ $or: [{ _id }, { id: _id }] });
-    activity.actor = await this.getActor(activity.actor);
+    let query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: id };
+    let activity = await Activity.findOne(query);
+    if (activity) activity.actor = await this.getActor(activity.actor);
 
     return activity;
   } catch (error) {

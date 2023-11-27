@@ -15,7 +15,7 @@ export default async function handler(
     if (options.populate.length > 0) {
       if (options.populate.includes("actor"))
         post.actor = await this.getActor(post.actor);
-      console.log(post.actor);
+
       if (options.populate.includes("replies"))
         post.replies = await Post.find({ id: { $in: post.replies } });
     }

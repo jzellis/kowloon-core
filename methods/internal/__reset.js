@@ -6,6 +6,7 @@ import {
   Actor,
   Circle,
   Group,
+  Invite,
   Post,
   Settings,
   User,
@@ -17,6 +18,7 @@ export default async function () {
     await Actor.deleteMany({});
     await Circle.deleteMany({});
     await Group.deleteMany({});
+    await Invite.deleteMany({});
     await Post.deleteMany({});
     await Settings.deleteMany({});
     await User.deleteMany({});

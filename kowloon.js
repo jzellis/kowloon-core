@@ -22,39 +22,19 @@ import _getUser from "./methods/internal/_getUser.js";
 import _getUsers from "./methods/internal/_getUsers.js";
 import auth from "./methods/other/auth.js";
 import createActivity from "./methods/create/createActivity.js";
-import createActor from "./methods/create/createActor.js";
-import createCircle from "./methods/create/createCircle.js";
-import createGroup from "./methods/create/createGroup.js";
-import createPost from "./methods/create/createPost.js";
 import getActivity from "./methods/get/getActivity.js";
 import getActivities from "./methods/get/getActivities.js";
 import getActor from "./methods/get/getActor.js";
 import getActors from "./methods/get/getActors.js";
-import getActorInbox from "./methods/get/getActorInbox.js";
-import getActorOutbox from "./methods/get/getActorOutbox.js";
 import getCircle from "./methods/get/getCircle.js";
-import getCirclePosts from "./methods/get/getCirclePosts.js";
 import getGroup from "./methods/get/getGroup.js";
-import getGroupInbox from "./methods/get/getGroupInbox.js";
 import getPost from "./methods/get/getPost.js";
 import getPosts from "./methods/get/getPosts.js";
-import getPublicInbox from "./methods/get/getPublicInbox.js";
-import getPublicOutbox from "./methods/get/getPublicOutbox.js";
 import init from "./methods/internal/init.js";
-import likePost from "./methods/other/likePost.js";
 import login from "./methods/other/login.js";
 import sanitize from "./methods/internal/sanitize.js";
 import _setUser from "./methods/internal/_setUser.js";
-import unlikePost from "./methods/other/unlikePost.js";
-import joinGroup from "./methods/other/joinGroup.js";
-import addActorToCircle from "./methods/other/addActorToCircle.js";
-import removeUserFromCircle from "./methods/other/removeActorFromCircle.js";
 import __reset from "./methods/internal/__reset.js";
-import togglePostLike from "./methods/other/togglePostLike.js";
-import followActor from "./methods/other/followActor.js";
-import unfollowActor from "./methods/other/unfollowActor.js";
-import blockActor from "./methods/other/blockActor.js";
-import unblockActor from "./methods/other/unblockActor.js";
 import _countActivities from "./methods/internal/_countActivities.js";
 import _countActors from "./methods/internal/_countActors.js";
 import _countCircles from "./methods/internal/_countCircles.js";
@@ -66,7 +46,9 @@ import _createSetting from "./methods/internal/_createSetting.js";
 import _updateSetting from "./methods/internal/_updateSetting.js";
 import _setup from "./methods/internal/_setup.js";
 import _generatePassword from "./methods/internal/_generatePassword.js";
-// const serverMethodDir = __dirname + `/methods/server/`;
+import _validateActivity from "./methods/internal/_validateActivity.js";
+import _validateActor from "./methods/internal/_validateActor.js";
+import _validatePost from "./methods/internal/_validatePost.js";
 /** @type {*} */
 const Kowloon = {
   settings: {},
@@ -127,39 +109,19 @@ const Kowloon = {
   _getUsers,
   auth,
   createActivity,
-  createActor,
-  createCircle,
-  createGroup,
-  createPost,
   getActivity,
   getActivities,
   getActor,
   getActors,
-  getActorInbox,
-  getActorOutbox,
   getCircle,
-  getCirclePosts,
   getGroup,
-  getGroupInbox,
   getPost,
   getPosts,
-  getPublicInbox,
-  getPublicOutbox,
   init,
-  likePost,
   login,
   sanitize,
   _setUser,
-  unlikePost,
-  joinGroup,
-  addActorToCircle,
-  removeUserFromCircle,
   __reset,
-  togglePostLike,
-  followActor,
-  unfollowActor,
-  blockActor,
-  unblockActor,
   _countActivities,
   _countActors,
   _countCircles,
@@ -171,6 +133,9 @@ const Kowloon = {
   _updateSetting,
   _setup,
   _generatePassword,
+  _validateActivity,
+  _validateActor,
+  _validatePost,
 };
 await Kowloon.init();
 

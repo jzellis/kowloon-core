@@ -1,0 +1,88 @@
+{
+    "cells": [
+        {
+            "language": "markdown",
+            "source": [
+                "select posts where:\n(actor = user\nor\nto,to,cc,bcc = user)\nor\n(actor is in user.following\nand\npublic is true)\nor\n(groups user is in includes partOf)\nor\n(circles user is in includes audience)\n\n{$or: [\n    {$or: [\n        {actor == actor.id},\n        {$or: [\n                {to: actor.id},\n                {bto: actor.id},\n                {cc: actor.id},\n                {bcc: actor.id},\n\n                ]\n        }\n        ]}\n        ]}"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "__Activities__"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Create_:\n```     \n        {\n            type: \"Create\",\n            actor: user.id, // the id of the user that's creating the object\n            objectType: [\"Actor\",\"Circle\",\"Group\",\"Post\"],\n            object: [Actor,Circle,Group,Post],\n        }\n```\n_returns_: `{activity, createdObject}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Update_:\n```     \n        {\n            type: \"Update\",\n            actor: userId,\n            objectType: [\"Actor\",\"Circle\",\"Group\",\"Post\"],\n            target: objectId // The id of the object you're updating\n            object: [Actor,Circle,Group,Post],\n        }\n```\n_returns_: `{activity, updatedObject}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Delete_:\n```     \n        {\n            type: \"Delete\",\n            actor: userId,\n            target: objectId // The id of the post you're deleting\n        }\n```\n_returns_: `{activity, deletedPost}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Like_:\n```     \n        {\n            type: \"Like\",\n            actor: userId,\n            target: objectId // The id of the post you're liking\n        }\n```\n_returns_: `{activity, likedPost}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Unlike_:\n```     \n        {\n            type: \"Unlike\",\n            actor: userId,\n            target: objectId // The id of the post you're unliking\n        }\n```\n_returns_: `{activity, unlikedPost}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Bookmark_:\n```     \n        {\n            type: \"Bookmark\",\n            actor: userId,\n            target: objectId // The id of the post you're bookmarking\n        }\n```\n_returns_: `{activity, bookmarkedPost}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Unbookmark_:\n```     \n        {\n            type: \"Bookmark\",\n            actor: userId,\n            target: objectId // The id of the post you're bookmarking\n        }\n```\n_returns_: `{activity, unbookmarkPost}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Follow_:\n```     \n        {\n            type: \"Bookmark\",\n            actor: userId,\n            target: followedId // The id of the actor you're following\n        }\n```\n_returns_: `{activity, followedActor}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "_Unfollow_:\n```     \n        {\n            type: \"Bookmark\",\n            actor: userId,\n            target: unfollowedId // The id of the actor you're unfollowing\n        }\n```\n_returns_: `{activity, unfollowedActor}`"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "markdown",
+            "source": [
+                "__Endpoints__\n\n| URL | GET (unauthorized) | GET (authorized) | POST | GET params | Post Body |\n|-|-|-|-|-|-|\n| / | Retrieves public server info | Retrieves all server settings | [If user and is admin] Updates server settings |\n| /api/login | --- | --- | logs user in and returns auth token | --- | `{username,password}` |\n| /api/auth | --- | --- | authorizes token and returns user | --- | `{token}` |\n| /api/preview | --- | returns a preview of a post | --- | `url` | --- |\n| /api/upload | --- | --- | Uploads files if user is authorized | --- | `{files}` |\n| /search | Retrieves all public data that matches query | Retrieves all data user is authorized to see in query | --- | `q, type [post,user,circle,group], limit` | --- |\n| inbox | --- | --- | Creates an activity on the server addressed to a server's user | `type, circle` | --- |\n| outbox | Gets all public posts on server | Gets all public posts plus user addressed posts | Adds a post to the server | `type, circle` | `{activity}` |\n| users/{id} | Gets user public profile | Gets all user profile data | [If user] Updates user profile | --- | `{user}` |\n| users/{id}/inbox | --- | Retrieves all posts addressed to {id} user if current user is {id} user | Sends a message to {id} user (alias of */inbox*) | `type` | `{post}` |\n| users/{id}/outbox | Retrieves all public posts from user | Retrives all public posts by {id} user and posts addressed to user | Adds an activity by user (if user) | type, circle | `{activity}` |\n| users/{id}/circles | Retrieves all of user's public circles | Retrieves all of user's circles | Adds a circle (if user and logged in) | --- | `{activity}` |\n| circles/{id} | Gets circle if public | Gets circle if user is creator | Updates circle profile if authorized | --- | `{circle}` |\n| groups | Gets all public groups | Gets all public groups and groups user can see | Adds a new group | `sort,page` | `{group}` |\n| groups/{id} | Gets group profile if public | Gets group profile is user is authorized | Updates group profile if authorized |\n| groups/{id}/inbox | --- | --- | adds a post to group if user is authorized |\n| groups/{id}/outbox | Retrieves all posts from group if public | Retrieves all group posts if user is authorized | Adds an activity by group (if user and logged in) |\n| groups/{id}/posts/{id} | Retrieves group post if group is public | Retrieves group post if user is member | --- |\n| /posts/{id} | Retrieves single post if public | Retrieves post if user is authorized | Updates post if authorized |"
+            ],
+            "outputs": []
+        }
+    ]
+}

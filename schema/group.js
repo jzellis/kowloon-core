@@ -18,9 +18,9 @@ GroupSchema.add({
   type: { type: String, default: "Group" },
   members: { type: [Object], default: [], alias: "items" },
   pending: { type: [Object], default: [] },
-  creator: { type: String, required: true },
-  admins: { type: [String], default: [] },
-  moderators: { type: [String], default: [] },
+  creator: { type: Object, required: true },
+  admins: { type: [Object], default: [] },
+  moderators: { type: [Object], default: [] },
   public: { type: Boolean, default: false },
   hidden: { type: Boolean, default: false },
   blocked: { type: [String], default: [] },
@@ -29,7 +29,7 @@ GroupSchema.add({
 GroupSchema.pre("save", async function (next) {
   this.id =
     this.id ||
-    `${(await Settings.findOne({ name: "domain" })).value}/groups/${this._id}`;
+    `group:${this._id}@${(await Settings.findOne({ name: "domain" })).value}`;
   this.href =
     this.href ||
     `//${(await Settings.findOne({ name: "domain" })).value}/groups/${

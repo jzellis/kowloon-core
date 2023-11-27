@@ -5,7 +5,8 @@ export default async function handler(req, res, next) {
   let status = 200;
   let response = {};
   let actor = await Kowloon.getActor(req.params.id);
-  if (Kowloon.user && Kowloon.user.actor && Kowloon.user.actor.id) {
+
+  if (Kowloon.user?.actor?.id) {
     response = await Kowloon.createActivity(req.body);
   }
 

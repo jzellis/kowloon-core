@@ -13,13 +13,13 @@ import userProfileGetRoute from "./get/users/index.js";
 import userOutboxGetRoute from "./get/users/outbox.js";
 import userInboxGetRoute from "./get/users/inbox.js";
 import userOutboxPostRoute from "./post/users/outbox.js";
+import userCirclesGetRoute from "./get/users/circles.js";
 
 import postGetRoute from "./get/post.js";
 import activityGetRoute from "./get/activity.js";
 import searchRoute from "./get/search.js";
 
-import replyPostRoute from "./post/posts/reply.js";
-
+import circleGetRoute from "./get/circle.js";
 import groupProfileGetRoute from "./get/groups/index.js";
 import groupOutboxGetRoute from "./get/groups/outbox.js";
 import groupInboxGetRoute from "./get/groups/inbox.js";
@@ -30,7 +30,7 @@ import previewRoute from "./api/preview.js";
 
 //Post Routes
 
-const staticPage = await fs.readFile("./index.html", "utf-8");
+const staticPage = await fs.readFile("./routes/index.html", "utf-8");
 
 const routes = {
   get: {
@@ -39,6 +39,8 @@ const routes = {
     "/users/:id": userProfileGetRoute,
     "/users/:id/outbox": userOutboxGetRoute,
     "/users/:id/inbox": userInboxGetRoute,
+    "/users/:id/circles": userCirclesGetRoute,
+    "/circles/:id": circleGetRoute,
     "/groups/:id": groupProfileGetRoute,
     "/groups/:id/outbox": groupOutboxGetRoute,
     "/groups/:id/inbox": groupInboxGetRoute,
@@ -46,13 +48,12 @@ const routes = {
     "/posts/:id": postGetRoute,
     "/activities/:id": activityGetRoute,
     "/search/:query": searchRoute,
-    "/preview": previewRoute,
+    "/api/preview": previewRoute,
   },
   post: {
     "/login": loginRoute,
-    "/upload": uploadRoute,
+    "/api/upload": uploadRoute,
     "/users/:id/outbox": userOutboxPostRoute,
-    "/posts/:postId/replies": replyPostRoute,
   },
 };
 
@@ -62,7 +63,6 @@ router.use(async (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,POST,OPTIONS");
   res.header("Access-Control-Allow-Headers", "*");
-  console.log(req.headers.authorization);
   let token = req.headers.authorization
     ? req.headers.authorization.split("Bearer ")[1]
     : undefined;

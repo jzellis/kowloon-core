@@ -51,11 +51,10 @@ ActivitySchema.add({
       "View",
     ],
     default: "Create",
-    alias: "verb",
   },
   public: { type: Boolean, default: true },
   circle: { type: String },
-  object: { type: Object, alias: "post" },
+  object: { type: Object },
   objectType: { type: String, default: "Post" },
   to: { type: [String], default: [] },
   cc: { type: [String], default: [] },
@@ -67,11 +66,10 @@ ActivitySchema.add({
 
 ActivitySchema.pre("save", async function (next) {
   let actor = await Actor.findOne({ id: this.actor });
-
   this.id =
     this.id ||
-    `${(await Settings.findOne({ name: "domain" })).value}/activities/${
-      this._id
+    `activity:${this._id}@${
+      (await Settings.findOne({ name: "domain" })).value
     }`;
 
   this.href =
@@ -89,23 +87,23 @@ ActivitySchema.pre("save", async function (next) {
   if (!this.public && this.object && this.object.public)
     this.public = this.object.public;
   if (this.object && this.object.audience) this.audience = this.object.audience;
-  if (this.object.partOf) this.partOf = this.object.partOf;
+  if (this.object?.partOf) this.partOf = this.object.partOf;
 
   // If this object and this object has an id, replace the object with the id, so this is a reference to it rather than the entire object
 
-  if (this.object.partOf) {
+  if (this.object?.partOf) {
     let group = await Group.findOne({ id: this.object.partOf });
     this.public = group.public;
     this.bcc = this.bcc
       ? Array.from(new Set([...this.bcc, ...group.members]))
       : [...group.members];
   }
-
-  this.signature = crypto.sign(
-    "SHA256",
-    Buffer.from(JSON.stringify(this._id)),
-    actor.privateKey
-  );
+  if (actor?.privateKey)
+    this.signature = crypto.sign(
+      "SHA256",
+      Buffer.from(JSON.stringify(this._id)),
+      actor.privateKey
+    );
   if (this.object && this.object.id) this.object = this.object.id;
 
   next();

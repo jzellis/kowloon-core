@@ -21,9 +21,11 @@ export default async function handler(
       await Promise.all(
         circles.map(async (circle) => {
           if (options.populate.includes("creator"))
-            circle.creator = await this.getActor(circle.creator);
+            circle.creator = await this.sanitize(this.getActor(circle.creator));
           if (options.populate.includes("members"))
-            circle.members = await Actor.find({ id: { $in: circle.members } });
+            circle.members = await this.sanitize(
+              Actor.find({ id: { $in: circle.members } })
+            );
           return circle;
         })
       );

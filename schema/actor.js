@@ -27,11 +27,12 @@ ActorSchema.add({
     default: "Person",
   },
   summary: { type: String, alias: "bio" },
-  following: { type: [Object], default: [] },
-  followers: { type: [Object], default: [] },
+  following: { type: Schema.Types.ObjectId, ref: "Circle" },
+  followers: { type: Schema.Types.ObjectId, ref: "Circle" },
+  groups: { type: [Schema.Types.ObjectId], ref: "Group", default: [] },
   liked: { type: [Object], default: [] },
   bookmarked: { type: [Object], default: [] },
-  blocked: { type: [Object], default: [] },
+  blocked: { type: [Object] },
   circles: { type: [Schema.Types.ObjectId], default: [], ref: "Circle" },
   lastTimelineUpdate: { type: Date, default: Date.now() },
   publicKey: String,
@@ -62,10 +63,13 @@ ActorSchema.index({
 
 ActorSchema.pre("save", async function (next) {
   this.id =
-    this.id ||
-    `@${this.preferredUsername}@${
-      (await Settings.findOne({ name: "asDomain" })).value
-    }`;
+    this.id || this.type != "Feed"
+      ? `@${this.preferredUsername}@${
+          (await Settings.findOne({ name: "asDomain" })).value
+        }`
+      : `feed:${this.preferredUsername}@${
+          (await Settings.findOne({ name: "asDomain" })).value
+        }`;
 
   if (this.type != "Feed") {
     this.href =
@@ -99,6 +103,28 @@ ActorSchema.pre("save", async function (next) {
     this.prefs.pronouns = (
       await Settings.findOne({ name: "defaultPronouns" })
     ).value;
+
+  if (!this.following)
+    this.following = (
+      await Circle.create({
+        creator: this._id,
+        name: `${this.name} - Following`,
+        description: `Users ${this.name} is following`,
+        members: [],
+        public: false,
+      })
+    )._id;
+
+  if (!this.followers)
+    this.followers = (
+      await Circle.create({
+        creator: this._id,
+        name: `${this.name} - Followers`,
+        description: `${this.name}'s followers`,
+        members: [],
+        public: false,
+      })
+    )._id;
 
   if (this.circles.length === 0)
     this.circles = [

@@ -6,7 +6,7 @@ export default async function (
   args = {
     adminUser: {
       username: "admin",
-      password: this._generatePassword(),
+      password: "admin",
       name: "Admin",
       email: "admin@kowloon.social",
       bio: "I am the admin of this server.",

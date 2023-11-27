@@ -9,7 +9,8 @@ const Schema = mongoose.Schema;
 
 const CircleSchema = new Schema(
   {
-    creator: { type: String, required: true },
+    id: { type: String },
+    creator: { type: Object, required: true },
     name: { type: String, required: true },
     href: { type: String },
     icon: { type: String },
@@ -21,10 +22,13 @@ const CircleSchema = new Schema(
 );
 
 CircleSchema.pre("save", async function (next) {
-  if (!this.icon)
-    this.icon = `${
-      (await Settings.findOne({ name: "domain" })).value
-    }/icons/circles.png`;
+  this.id =
+    this.id ||
+    `circle:${this._id}@${(await Settings.findOne({ name: "domain" })).value}`;
+
+  this.icon =
+    this.icon ||
+    `${(await Settings.findOne({ name: "domain" })).value}/icons/circles.png`;
 
   this.href =
     this.href ||

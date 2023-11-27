@@ -29,7 +29,7 @@ export default async function handler() {
     let settings = await Settings.find();
     if (settings.length === 0) await this._setup();
     settings.forEach(async (setting) => {
-      if (setting.public) this.settings[setting.name] = setting.value;
+      this.settings[setting.name] = setting.value;
     });
 
     console.log(`Users: ${await User.countDocuments()}`);

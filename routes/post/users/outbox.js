@@ -12,11 +12,12 @@ export default async function handler(req, res, next) {
       Kowloon.user.actor.id &&
       Kowloon.user.actor.id == actor.id
     ) {
-      if (req.body.post)
-        response.post = await Kowloon.createPost({
-          ...req.body.post,
-          actor: Kowloon.user.actor.id,
-        });
+      let isValid = Kowloon._validateActivity(req.body);
+      if (isValid) {
+        response = await Kowloon.createActivity(req.body);
+      } else {
+        response = { error: isValid.errors };
+      }
     }
   } catch (error) {
     response = { error };

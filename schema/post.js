@@ -50,7 +50,7 @@ PostSchema.pre("save", async function (next) {
   let actor = await Actor.findOne({ id: this.actor });
   this.id =
     this.id ||
-    `${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;
+    `post:${this._id}@${(await Settings.findOne({ name: "domain" })).value}`;
   this.href =
     this.href ||
     `//${(await Settings.findOne({ name: "domain" })).value}/posts/${this._id}`;

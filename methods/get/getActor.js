@@ -1,10 +1,12 @@
 /**
  * @namespace kowloon
  */
-export default async function (userId) {
+export default async function (userId, options = { populate: [] }) {
   try {
-    return this.sanitize(await this._getActor(userId));
+    let actor = await this._getActor(userId, (options = { populate: [] }));
+    return this.sanitize(actor);
   } catch (error) {
+    console.log(error);
     return { error };
   }
 }

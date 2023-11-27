@@ -17,7 +17,6 @@ export default async function handler(
       .sort(options.sort)
       .skip((page - 1) * options.pageLength)
       .limit(options.pageLength);
-    console.log(options.sort);
     if (options.populate.length > 0) {
       items = await Promise.all(
         items.map(async (post) => {

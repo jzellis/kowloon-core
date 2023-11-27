@@ -6,9 +6,13 @@ import { Types } from "mongoose";
 const ObjectId = Types.ObjectId;
 
 export default async function handler(id) {
-  let query = ObjectId.isValid(id)
-    ? { _id: new ObjectId(id) }
-    : { $or: [{ id: id }, { username: id }] };
+  try {
+    let query = ObjectId.isValid(id)
+      ? { _id: new ObjectId(id) }
+      : { $or: [{ id: id }, { username: id }] };
 
-  return await Actor.findOne(query);
+    return await Actor.findOne(query);
+  } catch (error) {
+    return { error };
+  }
 }
