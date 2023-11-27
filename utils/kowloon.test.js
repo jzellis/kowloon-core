@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import Kowloon from "./kowloon.js";
+import Kowloon from "../kowloon.js";
 import { faker } from "@faker-js/faker";
 console.time("test");
 

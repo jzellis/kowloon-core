@@ -31,8 +31,6 @@
   "author": "Joshua Ellis",
   "license": "ISC",
   "devDependencies": {
-    "@faker-js/faker": "^8.0.2",
-    "jest": "^29.7.0",
-    "webpack-dev-server": "^4.15.1"
+    "@faker-js/faker": "^8.0.2"
   }
 }
