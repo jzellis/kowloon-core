@@ -19,10 +19,7 @@ dotenv.config();
 
 export default async function handler() {
   try {
-    const db = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    const db = await mongoose.connect(process.env.MONGODB_URI);
     this.connection.isConnected = db.connections[0].readyState === 1;
     console.log("Kowloon database connection established");
     // }

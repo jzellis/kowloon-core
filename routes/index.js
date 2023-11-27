@@ -30,7 +30,7 @@ import previewRoute from "./api/preview.js";
 
 //Post Routes
 
-const staticPage = await fs.readFile("./routes/index.html", "utf-8");
+const staticPage = await fs.readFile("./frontend/dist/index.html", "utf-8");
 
 const routes = {
   get: {
@@ -87,12 +87,19 @@ router.use(async (req, res, next) => {
     }
     next();
   } else {
-    if (req.path.split("/")[1] === "public") {
-      res.setHeader("content-type", mime.getType(process.cwd() + req.path));
-      res.send(await fs.readFile(process.cwd() + req.path));
-    } else {
-      res.setHeader("content-type", "text/html");
-      res.send(staticPage);
+    try {
+      if (await fs.stat("./frontend/dist" + req.path)) {
+        res.setHeader(
+          "content-type",
+          mime.getType(process.cwd() + "./frontend/dist" + req.path)
+        );
+        let file = (await fs.stat("./frontend/dist" + req.path)).isDirectory()
+          ? "./frontend/dist" + req.path + "index.html"
+          : "./frontend/dist" + req.path;
+        res.send(await fs.readFile(file, "utf-8"));
+      }
+    } catch (e) {
+      res.send(await fs.readFile("./frontend/dist/index.html", "utf-8"));
     }
   }
 });
