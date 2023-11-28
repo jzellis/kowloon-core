@@ -1,6 +1,6 @@
 import { createBrowserRouter,RouterProvider } from "react-router-dom";
 import Layout from "./components/Layout";
-import { Home, Login, PageNotFound } from "./views";
+import { Home, Login, PageNotFound, Setup } from "./views";
 import { useSelector, useDispatch } from "react-redux";
 import { setUser } from "./store/user";
 import { setSettings } from "./store/kowloon";
@@ -32,6 +32,9 @@ function App() {
     },
     {      path: "/login",
       element: <Login />,
+    },
+    {      path: "/setup",
+      element: <Setup />,
     }
   ]);
 

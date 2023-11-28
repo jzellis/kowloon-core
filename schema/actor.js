@@ -65,10 +65,10 @@ ActorSchema.pre("save", async function (next) {
   this.id =
     this.id || this.type != "Feed"
       ? `@${this.preferredUsername}@${
-          (await Settings.findOne({ name: "asDomain" })).value
+          (await Settings.findOne({ name: "domain" })).value
         }`
       : `feed:${this.preferredUsername}@${
-          (await Settings.findOne({ name: "asDomain" })).value
+          (await Settings.findOne({ name: "domain" })).value
         }`;
 
   if (this.type != "Feed") {

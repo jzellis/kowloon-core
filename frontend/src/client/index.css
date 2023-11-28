@@ -1,17 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* :root {
+
+} */
 
 a {
   @apply hover:text-blue-500;
 }
 
-#timeline .item .title {
-  @apply font-bold;
+#header {
+  @apply navbar bg-gray-100 border-b border-gray-200 mb-4;
 }
 
-#timeline {
-  @apply w-1/2 mx-auto;
+#header h1 {
+  @apply uppercase text-2xl;
+  font-family: "Bebas Neue", sans-serif !important;
+}
+
+#header h1 a {
+  @apply hover:text-inherit;
+}
+
+#layout {
+  @apply flex w-full gap-4 min-h-screen;
+}
+
+.sidebar {
+  @apply w-1/4 bg-slate-200 p-4;
+}
+
+#LeftSidebar {
+  @apply rounded-tr-lg;
+}
+
+#RightSidebar {
+  @apply rounded-tl-lg;
+}
+
+.sidebar .description {
+  @apply text-sm;
+}
+#main {
+  @apply w-1/2;
+}
+
+#timeline .item .title {
+  @apply font-bold;
 }
 
 #timeline .item {
@@ -36,4 +74,9 @@ a {
 
 #timeline .item .actions li {
   @apply w-full text-center;
+}
+
+#setup form .divider {
+  @apply text-2xl;
+  font-family: "Bebas Neue", sans-serif;
 }

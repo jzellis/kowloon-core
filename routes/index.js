@@ -27,6 +27,7 @@ import groupInboxGetRoute from "./get/groups/inbox.js";
 import loginRoute from "./api/login.js";
 import uploadRoute from "./api/upload.js";
 import previewRoute from "./api/preview.js";
+import setupRoute from "./api/setup.js";
 
 //Post Routes
 
@@ -54,6 +55,7 @@ const routes = {
     "/login": loginRoute,
     "/api/upload": uploadRoute,
     "/users/:id/outbox": userOutboxPostRoute,
+    "/setup": setupRoute,
   },
 };
 

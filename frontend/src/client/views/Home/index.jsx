@@ -6,7 +6,7 @@ export default function Home(props) {
     const title = useSelector(state => state.kowloon.settings.title)
 
     useEffect(() => {
-        if(typeof window != "undefined" && title) document.title = title + " | Home";
+        document.title = title ? title + " | Home" : document.title;
     },[])
     return (
         <>

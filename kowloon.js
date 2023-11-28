@@ -7,6 +7,7 @@
 import _createUser from "./methods/internal/_createUser.js";
 import _deleteUser from "./methods/internal/_deleteUser.js";
 import _updateUser from "./methods/internal/_updateUser.js";
+import _updateActor from "./methods/internal/_updateActor.js";
 import _getActivities from "./methods/internal/_getActivities.js";
 import _getActivity from "./methods/internal/_getActivity.js";
 import _getActor from "./methods/internal/_getActor.js";
@@ -94,6 +95,7 @@ const Kowloon = {
   _createUser,
   _deleteUser,
   _updateUser,
+  _updateActor,
   _getActivities,
   _getActivity,
   _getActor,
