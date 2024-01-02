@@ -12,7 +12,7 @@ export default function Sidebar() {
                     <FaMapMarkerAlt className="inline" /> {location.name}
                 </a>
             </div>
-            }
+                }
         </div>
     )
 }

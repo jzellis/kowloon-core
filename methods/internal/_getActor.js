@@ -5,7 +5,7 @@ import { Actor } from "../../schema/index.js";
 import { Types } from "mongoose";
 const ObjectId = Types.ObjectId;
 
-export default async function handler(id) {
+export default async function handler(id, options = { populate: "" }) {
   try {
     let query = ObjectId.isValid(id)
       ? { _id: new ObjectId(id) }

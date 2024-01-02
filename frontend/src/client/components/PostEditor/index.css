@@ -1,0 +1,160 @@
+#post-editor-overlay {
+  @apply fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-25 z-40;
+}
+
+#post-editor {
+  @apply absolute bg-white z-[100] p-8 shadow-2xl rounded-b-xl w-1/3 translate-x-full;
+  background: url(paper8.jpg);
+  background-size: auto 100%;
+  background-repeat: repeat;
+  margin: 0;
+}
+
+#post-editor .header {
+  @apply flex w-full items-stretch;
+}
+
+#post-editor .header h1 {
+  @apply text-3xl flex-1;
+  font-family: "Bebas Neue", sans-serif;
+}
+
+#post-editor.Note .header h1 {
+  @apply text-red-400;
+}
+
+#post-editor.Note .btn {
+  @apply bg-red-400 text-red-950 border-red-500 hover:text-white;
+}
+
+#post-editor .btn-secondary {
+  @apply bg-blue-400 text-white border-gray-400;
+}
+
+#post-editor.Article {
+  @apply w-1/2 translate-x-1/2;
+}
+
+#post-editor.Article .header h1 {
+  @apply text-orange-400;
+}
+
+#post-editor.Article .btn {
+  @apply bg-orange-400 text-orange-950 border-orange-500;
+}
+
+#post-editor.Media .header h1 {
+  @apply text-green-500;
+}
+
+#post-editor.Media .btn {
+  @apply bg-green-500 text-green-950 border-green-500;
+}
+
+#post-editor.Link .header h1 {
+  @apply text-blue-400;
+}
+
+#post-editor.Link .btn {
+  @apply bg-blue-400 text-blue-950 border-blue-500;
+}
+#post-editor .header .select-type {
+  @apply flex-1 flex gap-2 justify-end;
+}
+
+#post-editor .header .select-type li {
+  @apply cursor-pointer p-2 bg-gray-200 rounded-full aspect-square text-center text-2xl opacity-50 hover:opacity-100;
+}
+
+#post-editor.Note .header .select-type li {
+  @apply cursor-pointer p-2 bg-gray-200 rounded-full aspect-square text-center text-2xl;
+}
+
+#post-editor .header .select-type li * {
+  @apply text-black opacity-100;
+}
+
+#post-editor.Note .header .select-type li.selected {
+  @apply font-bold bg-red-400;
+}
+#post-editor.Article .header .select-type li.selected {
+  @apply font-bold bg-orange-400;
+}
+
+#post-editor.Media .header .select-type li.selected {
+  @apply font-bold bg-green-500;
+}
+
+#post-editor.Link .header .select-type li.selected {
+  @apply font-bold bg-blue-400;
+}
+
+#post-editor input.title,
+#post-editor input.link {
+  @apply input input-bordered w-full my-4 no-underline cursor-text;
+}
+
+#post-editor input.title {
+  @apply font-bold text-lg;
+}
+
+#post-editor .description {
+  @apply text-right text-xs mt-8;
+}
+
+#post-editor.Note .description {
+  @apply text-red-400;
+}
+
+#post-editor.Article .description {
+  @apply text-orange-400;
+}
+
+#post-editor.Media .description {
+  @apply text-green-500;
+}
+
+#post-editor.Link .description {
+  @apply text-blue-400;
+}
+
+/* Post Editor Styles */
+.editor-wrapper {
+  @apply mt-2 mb-4;
+}
+
+.rdw-editor-toolbar {
+  @apply visible bg-transparent;
+}
+
+.rdw-option-wrapper {
+  @apply bg-transparent;
+}
+
+.rdw-editor-toolbar {
+  @apply border-none;
+}
+
+.rdw-editor-main {
+  @apply bg-white px-4 pb-8 min-h-[10rem] rounded-lg focus-within:shadow-inner border border-gray-300;
+}
+
+.rdw-editor-main.type-article {
+  @apply lg:min-h-[20rem];
+}
+
+.lengthInfo {
+  @apply text-right text-xs opacity-50;
+}
+
+.upload-button {
+  @apply btn w-full mt-4;
+}
+
+#post-editor .featured-image {
+  @apply w-full max-w-fit max-h-48 object-contain;
+}
+
+#post-editor .featured-image img {
+  @apply object-contain max-h-48;
+}

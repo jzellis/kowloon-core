@@ -1,24 +1,59 @@
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* :root {
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
 
-} */
+html {
+  @apply h-screen overflow-x-hidden;
+}
+:root {
+  background: url(paper8.jpg);
+  background-size: auto 100%;
+  background-repeat: repeat;
+  margin: 0;
+}
 
 a {
   @apply hover:text-blue-500;
 }
 
 #header {
-  @apply navbar bg-gray-100 border-b border-gray-200 mb-4;
+  @apply navbar bg-white bg-opacity-30 border border-gray-200 m-0 flex;
 }
 
 #header h1 {
-  @apply uppercase text-2xl;
+  @apply flex-1;
+}
+
+#header #login {
+  @apply flex gap-2 text-right w-[20%];
+}
+
+#login input {
+  @apply input-xs;
+}
+
+h1 {
+  @apply text-red-600;
   font-family: "Bebas Neue", sans-serif !important;
+  mix-blend-mode: multiply;
+}
+
+h1 {
+  @apply text-[4rem];
 }
 
 #header h1 a {
@@ -26,54 +61,60 @@ a {
 }
 
 #layout {
-  @apply flex w-full gap-4 min-h-screen;
+  @apply flex w-full max-h-screen;
 }
 
 .sidebar {
-  @apply w-1/4 bg-slate-200 p-4;
+  @apply w-1/4 p-8 relative;
 }
 
-#LeftSidebar {
-  @apply rounded-tr-lg;
+.sidebar::before {
+  content: "";
+  display: block;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  mix-blend-mode: multiply;
+  @apply -z-10;
+  /* @apply rounded-tr-lg; */
+
+  /* filter: contrast(170%) brightness(1000%); */
+
+  /* mix-blend-mode: overlay; */
+}
+
+#LeftSidebar::before {
+  @apply bg-blue-200;
+}
+
+#RightSidebar::before {
+  @apply bg-blue-500;
 }
 
 #RightSidebar {
-  @apply rounded-tl-lg;
+  @apply text-white;
+}
+
+#RightSidebar a {
+  @apply hover:text-blue-200;
+}
+
+#RightSidebar .user {
+  @apply text-center;
 }
 
 .sidebar .description {
   @apply text-sm;
 }
 #main {
-  @apply w-1/2;
+  @apply w-1/2 relative flex-grow pb-40 overflow-y-scroll no-scrollbar;
+  /* box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.25); */
 }
 
-#timeline .item .title {
-  @apply font-bold;
-}
-
-#timeline .item {
-  @apply w-full shadow-2xl rounded-md p-8;
-}
-
-#timeline .item .meta {
-  @apply text-sm;
-}
-
-#timeline .item .actor .avatar {
-  @apply w-8 h-8;
-}
-
-#timeline .item .content {
-  @apply mt-8 mx-8;
-}
-
-#timeline .item .actions {
-  @apply w-full flex gap-2 text-sm mt-4;
-}
-
-#timeline .item .actions li {
-  @apply w-full text-center;
+.newPostButton {
+  @apply rounded-full p-4 fixed bottom-10 right-1/4 -mr-10 z-50 bg-red-600 border-red-700 border-4 text-3xl text-white hover:bg-red-300 hover:text-red-700 shadow-lg;
 }
 
 #setup form .divider {

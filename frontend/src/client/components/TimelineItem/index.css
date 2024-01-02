@@ -1,0 +1,100 @@
+#timeline {
+  .items {
+    .item {
+      @apply bg-white m-4 rounded-md grid grid-cols-9 gap-2 shadow-md;
+
+      .actor {
+        @apply text-center text-xs p-4 col-span-1;
+
+        img {
+          @apply w-20 h-auto rounded-full mx-auto border-2;
+        }
+
+        .name {
+          @apply w-full text-center leading-4;
+        }
+      }
+      .name {
+        @apply font-bold;
+      }
+      .main-content {
+        @apply p-4 col-span-7;
+      }
+
+      .title {
+        @apply text-4xl;
+        font-family: "Bebas Neue", sans-serif;
+      }
+
+      .meta {
+        @apply text-base;
+      }
+
+      .content {
+        @apply mt-8 text-[0.9rem] pb-4 text-justify;
+        /* font-family: "Merriweather", serif; */
+        p {
+          @apply leading-6 mb-[1.25rem];
+        }
+      }
+
+      .actions {
+        @apply flex justify-items-center w-full;
+        li {
+          @apply flex-1 text-center;
+        }
+      }
+    }
+
+    .item.Article {
+      .title,
+      .title * {
+        @apply text-orange-900;
+      }
+
+      .actor {
+        @apply bg-orange-100 border-r border-r-orange-200;
+        img {
+          @apply border-orange-300;
+        }
+      }
+    }
+
+    .item.Note {
+      .title {
+        @apply text-red-900;
+      }
+      .actor {
+        @apply bg-red-100 border-r border-r-red-200;
+        img {
+          @apply border-red-300;
+        }
+      }
+      .content {
+        @apply text-[1.1rem];
+      }
+    }
+
+    .item.Link {
+      .title,
+      .title * {
+        @apply text-green-900;
+      }
+      .actor {
+        @apply bg-green-100 border-r border-r-green-200;
+        img {
+          @apply border-green-300;
+        }
+      }
+    }
+
+    .item.Media {
+      .actor {
+        @apply bg-blue-100 border-r border-r-blue-200;
+        img {
+          @apply border-blue-300;
+        }
+      }
+    }
+  }
+}

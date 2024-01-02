@@ -14,7 +14,7 @@ const Kowloon = {
     };
     if (store.getState().user.user.accessToken)
       headers.Authorization =
-        "Bearer : " + store.getState().user.user.accessToken;
+        "Bearer " + store.getState().user.user.accessToken;
     return await (
       await fetch(`${this.endpoint}${url}`, {
         headers,
@@ -29,7 +29,7 @@ const Kowloon = {
     };
     if (store.getState().user.user.accessToken)
       headers.Authorization =
-        "Bearer : " + store.getState().user.user.accessToken;
+        "Bearer " + store.getState().user.user.accessToken;
     return await (
       await fetch(`${this.endpoint}${url}`, {
         method: "POST",
@@ -51,6 +51,7 @@ const Kowloon = {
     const data = await response.json();
     return data;
   },
+
   auth: async function (token) {
     const response = await fetch(`${this.endpoint}/auth`, {
       method: "POST",
@@ -62,6 +63,14 @@ const Kowloon = {
     });
     const data = await response.json();
     return data;
+  },
+
+  getLinkPreview: async function (url) {
+    return await this.get(`/api/preview?url=${url}`);
+  },
+
+  createActivity: async function (activity) {
+    return await this.post(`/outbox`, { activity });
   },
 };
 

@@ -11,6 +11,7 @@ import indexOutboxRoute from "./get/outbox.js";
 // import outboxGetRoute from "./get/outbox.js";
 import userProfileGetRoute from "./get/users/index.js";
 import userOutboxGetRoute from "./get/users/outbox.js";
+import outboxPostRoute from "./post/outbox.js";
 import userInboxGetRoute from "./get/users/inbox.js";
 import userOutboxPostRoute from "./post/users/outbox.js";
 import userCirclesGetRoute from "./get/users/circles.js";
@@ -53,6 +54,7 @@ const routes = {
   },
   post: {
     "/login": loginRoute,
+    "/outbox": outboxPostRoute,
     "/api/upload": uploadRoute,
     "/users/:id/outbox": userOutboxPostRoute,
     "/setup": setupRoute,
@@ -76,7 +78,8 @@ router.use(async (req, res, next) => {
   if (
     ["application/activity+json", "application/json"].includes(
       req.headers.accept
-    )
+    ) &&
+    req.path.toLowerCase().indexOf("public") === -1
   ) {
     for (const [url, route] of Object.entries(routes.get)) {
       router.get(url, route);
@@ -89,6 +92,7 @@ router.use(async (req, res, next) => {
     }
     next();
   } else {
+    console.log("File:", "./frontend/dist" + req.path);
     try {
       if (await fs.stat("./frontend/dist" + req.path)) {
         res.setHeader(
@@ -98,6 +102,7 @@ router.use(async (req, res, next) => {
         let file = (await fs.stat("./frontend/dist" + req.path)).isDirectory()
           ? "./frontend/dist" + req.path + "index.html"
           : "./frontend/dist" + req.path;
+        res.setHeader("content-type", mime.getType(file));
         res.send(await fs.readFile(file, "utf-8"));
       }
     } catch (e) {

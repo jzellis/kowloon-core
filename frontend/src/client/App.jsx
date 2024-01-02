@@ -30,9 +30,6 @@ function App() {
         },
       ],
     },
-    {      path: "/login",
-      element: <Login />,
-    },
     {      path: "/setup",
       element: <Setup />,
     }

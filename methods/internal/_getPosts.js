@@ -21,8 +21,7 @@ export default async function handler(
       items = await Promise.all(
         items.map(async (post) => {
           if (options.populate.includes("actors"))
-            post.actor = await this.getActor(post.actor);
-
+            post.actor = await this._getActor(post.actor);
           if (options.populate.includes("replies"))
             post.replies = await Post.find({ id: { $in: post.replies } });
 

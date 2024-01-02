@@ -27,7 +27,7 @@ const UserSchema = new Schema(
     name: { type: String, required: true },
     id: String,
     //Our password is hashed with bcrypt
-    password: { type: String, required: true },
+    password: { type: String },
     email: { type: String, required: true },
     prefs: Object,
     actor: { type: mongoose.Types.ObjectId, ref: "Actor" },
