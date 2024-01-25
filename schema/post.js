@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { AsObjectSchema } from "./asobject.js";
 import { Actor, Group, Settings, Circle } from "./index.js";
 import sanitizeHtml from "sanitize-html";
+import { htmlToText } from "html-to-text";
 import { marked } from "marked";
 import crypto from "crypto";
 const PostSchema = AsObjectSchema.clone();
@@ -34,6 +35,7 @@ PostSchema.add({
   public: { type: Boolean, default: false },
   circle: { type: String },
   flagged: { type: Boolean, default: false },
+  deleted: { type: Date, default: null },
   publicCanReply: { type: Boolean, default: false },
   characterCount: { type: Number, default: 0 },
   wordCount: { type: Number, default: 0 },
@@ -66,6 +68,7 @@ PostSchema.pre("save", async function (next) {
   } else if (this.source.mediaType.includes("markdown")) {
     this.content = `${marked(this.source.content)}`;
   }
+  this.summary = htmlToText(this.content).slice(0, 200);
 
   this.attributedTo = this.attributedTo || this.actor;
 

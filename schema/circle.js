@@ -10,13 +10,14 @@ const Schema = mongoose.Schema;
 const CircleSchema = new Schema(
   {
     id: { type: String },
-    creator: { type: Object, required: true },
+    actor: { type: Object, required: true },
     name: { type: String, required: true },
     href: { type: String },
     icon: { type: String },
     description: { type: String, default: "" },
     public: { type: Boolean, default: false },
     members: { type: [Object], default: [] },
+    deleted: Date,
   },
   { timestamps: true }
 );

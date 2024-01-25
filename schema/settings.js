@@ -1,7 +1,7 @@
 /**
-         * @namespace kowloon
-         */
-        import mongoose from "mongoose";
+ * @namespace kowloon
+ */
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 /** @class Settings */
 
@@ -15,6 +15,7 @@ const SettingsSchema = new Schema(
       type: { type: String, default: "text" },
       options: Object,
     },
+    deleted: Date,
   },
 
   {

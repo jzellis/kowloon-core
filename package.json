@@ -23,7 +23,8 @@
     "nocache": "^4.0.0",
     "rss-parser": "^3.13.0",
     "sanitize-html": "^2.10.0",
-    "tensify": "^0.0.4"
+    "tensify": "^0.0.4",
+    "underscore": "^1.13.6"
   },
   "scripts": {
     "start": "node index.js; webpack-dev-server ./frontend/"

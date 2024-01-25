@@ -23,6 +23,7 @@ ActorSchema.add({
       "Service",
       "Server",
       "Feed",
+      "Tombstone",
     ],
     default: "Person",
   },
@@ -51,6 +52,7 @@ ActorSchema.add({
       pronouns: null,
     },
   },
+  deleted: Date,
 });
 
 ActorSchema.index({
@@ -102,12 +104,12 @@ ActorSchema.pre("save", async function (next) {
   if (!this.prefs.pronouns)
     this.prefs.pronouns = (
       await Settings.findOne({ name: "defaultPronouns" })
-    ).value;
+    ).value.they;
 
   if (!this.following)
     this.following = (
       await Circle.create({
-        creator: this._id,
+        actor: this._id,
         name: `${this.name} - Following`,
         description: `Users ${this.name} is following`,
         members: [],
@@ -118,7 +120,7 @@ ActorSchema.pre("save", async function (next) {
   if (!this.followers)
     this.followers = (
       await Circle.create({
-        creator: this._id,
+        actor: this._id,
         name: `${this.name} - Followers`,
         description: `${this.name}'s followers`,
         members: [],
@@ -130,7 +132,7 @@ ActorSchema.pre("save", async function (next) {
     this.circles = [
       (
         await Circle.create({
-          creator: this._id,
+          actor: this._id,
           name: `${this.name}'s Friends`,
           description: `Circle for friends of ${this.name}`,
           members: [],

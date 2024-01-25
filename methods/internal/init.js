@@ -1,6 +1,12 @@
 /**
  * @namespace kowloon
  */
+import fs from "fs/promises";
+import path from "path";
+import { URL } from "url";
+
+const __dirname = new URL(".", import.meta.url).pathname;
+const verbDir = __dirname + "../../verbs";
 import * as dotenv from "dotenv";
 import mongoose from "mongoose";
 // import { createClient } from "redis";

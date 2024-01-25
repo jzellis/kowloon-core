@@ -33,6 +33,7 @@ const UserSchema = new Schema(
     actor: { type: mongoose.Types.ObjectId, ref: "Actor" },
     active: { type: Boolean, default: true },
     blocked: { type: Boolean, default: false },
+    deleted: Date,
     lastLogin: Date,
     lastAccessed: Date,
     accessToken: String,
